@@ -5,4 +5,4 @@ import qualified Zeiterfassung (someFunc)
 main :: IO ()
 main = do
   putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+  Zeiterfassung.someFunc
