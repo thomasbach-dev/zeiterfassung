@@ -1,7 +1,13 @@
 module Zeiterfassung.Data
-   ( LogLine(..)
+   ( AgendaLog
+   , LogLine(..)
    , Time(..)
+   , roundToNextFiveMinutes
    ) where
+
+import Data.Time (Day)
+
+type AgendaLog = [(Day, [LogLine])]
 
 data LogLine = LogLine { startTime :: Time
                        , endTime :: Time

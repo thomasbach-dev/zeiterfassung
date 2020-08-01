@@ -1,5 +1,6 @@
 module Zeiterfassung.Parser
-  ( pLogLine
+  ( pAgendaLog
+  , pLogLine
   , pDate
   ) where
 
@@ -10,6 +11,12 @@ import Text.Parsec.Text (Parser)
 import qualified Text.Parsec as P
 
 import Zeiterfassung.Data
+
+pAgendaLog :: Parser AgendaLog
+pAgendaLog = do _ <- P.optional (P.string "Week-agend" 
+                                 *> P.anyChar `P.manyTill` P.newline)
+                P.many ((,) <$> pDate
+                            <*> (pLogLine `P.manyTill` ((const () <$> P.lookAhead pDate) P.<|> P.eof)))
 
 pLogLine :: Parser LogLine
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
@@ -39,11 +46,10 @@ pDate = do _ <- pWeekday
            _ <- P.space
            year <- pYear
            _ <- P.anyChar `P.manyTill` P.newline
-           _ <- P.many P.newline
            return (fromGregorian year month day)
 
 pDay :: Parser Int
-pDay = read <$> P.count 2 P.digit
+pDay = read <$> (P.many1 P.digit)
 
 pMonth :: Parser Int
 pMonth = 
@@ -56,5 +62,5 @@ pYear = read <$> P.count 4 P.digit
 
 pWeekday :: Parser String
 pWeekday = P.choice $
-  map P.string [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
-               , "Saturday", "Sunday"]
+  map (P.try . P.string) [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+                         , "Saturday", "Sunday"]
