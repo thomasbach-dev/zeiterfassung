@@ -9,6 +9,7 @@ import Data.Time (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
 import qualified Text.Parsec as P
+import qualified Data.Text as T
 
 import Zeiterfassung.Data
 
@@ -26,7 +27,7 @@ pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
               _ <- P.space *> P.string "Clocked:" *> P.spaces
                    *> P.char '(' *> pTime *> P.char ')' *> P.spaces
               _ <- P.optional (pTaskState *> P.space)
-              subj <- P.anyChar `P.manyTill` P.newline
+              subj <- T.pack <$> P.anyChar `P.manyTill` P.newline
               return (LogLine start end subj)
 
 pTime :: Parser Time

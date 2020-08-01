@@ -5,13 +5,15 @@ module Zeiterfassung.Data
    , roundToNextFiveMinutes
    ) where
 
+import qualified Data.Text as T
+
 import Data.Time (Day)
 
 type AgendaLog = [(Day, [LogLine])]
 
 data LogLine = LogLine { startTime :: Time
                        , endTime :: Time
-                       , subject :: String
+                       , subject :: T.Text
                        }
              deriving (Eq, Show)
 
