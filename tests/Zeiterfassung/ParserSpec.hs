@@ -6,6 +6,7 @@ import Test.Hspec
 
 import qualified Text.Parsec as P
 
+import Zeiterfassung.Data
 import Zeiterfassung.Parser
 
 spec :: Spec

@@ -1,4 +1,7 @@
-module Zeiterfassung.Parser where
+module Zeiterfassung.Parser
+  ( pLogLine
+  , pDate
+  ) where
 
 import Control.Applicative ((<$))
 import Data.Time (Day, fromGregorian)
@@ -6,16 +9,7 @@ import Text.Parsec.Text (Parser)
 
 import qualified Text.Parsec as P
 
-type AgendaOutput = [(Day, [LogLine])]
-
-data LogLine = LogLine { startTime :: Time
-                       , endTime :: Time
-                       , subject :: String
-                       }
-             deriving (Eq, Show)
-
-data Time = Time Int Int
-          deriving (Eq, Show)
+import Zeiterfassung.Data
 
 pLogLine :: Parser LogLine
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
