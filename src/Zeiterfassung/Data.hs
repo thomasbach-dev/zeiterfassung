@@ -17,3 +17,11 @@ data LogLine = LogLine { startTime :: Time
 
 data Time = Time Int Int
           deriving (Eq, Show)
+
+roundToNextFiveMinutes :: Time -> Time
+roundToNextFiveMinutes (Time h m) = (Time h m')
+  where 
+    remainer = m `mod` 5
+    m' = if remainer < 3
+            then m - remainer
+            else m + (5 - remainer)
