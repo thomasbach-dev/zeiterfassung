@@ -1,10 +1,12 @@
-module Zeiterfassung where
+module Zeiterfassung.Parser where
 
 import Control.Applicative ((<$))
 import Data.Time (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
 import qualified Text.Parsec as P
+
+type AgendaOutput = [(Day, [LogLine])]
 
 data LogLine = LogLine { startTime :: Time
                        , endTime :: Time

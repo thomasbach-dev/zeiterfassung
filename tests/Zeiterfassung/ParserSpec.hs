@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
-module ZeiterfassungSpec (spec) where
+module Zeiterfassung.ParserSpec (spec) where
 
 import Data.Time (fromGregorian)
 import Test.Hspec
 
 import qualified Text.Parsec as P
 
-import Zeiterfassung
+import Zeiterfassung.Parser
 
 spec :: Spec
 spec = do
