@@ -22,7 +22,7 @@ pAgendaLog = do _ <- P.optional (P.string "Week-agend"
 pLogLine :: Parser LogLine
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
               start <- pTime
-              _ <- P.char '-'
+              _ <- P.char '-' *> P.optional P.space
               end <- pTime
               _ <- P.space *> P.string "Clocked:" *> P.spaces
                    *> P.char '(' *> pTime *> P.char ')' *> P.spaces
@@ -36,7 +36,7 @@ pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
            return (Time hour minute)
 
 pTaskState :: Parser String
-pTaskState = P.choice $ map P.string ["TODO", "DONE"]
+pTaskState = (P.try . P.choice . map P.string) ["TODO", "DONE"]
 
 pDate :: Parser Day
 pDate = do _ <- pWeekday
