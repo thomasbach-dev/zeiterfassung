@@ -7,7 +7,8 @@ author:              Thomas Bach
 maintainer:          info@thomasbach.dev
 
 library
-  exposed-modules:     Zeiterfassung.Data
+  exposed-modules:     Zeiterfassung
+                     , Zeiterfassung.Data
                      , Zeiterfassung.Parser
   build-depends:     , base   >=4.12 && <4.13
                      , parsec >=3.1  && <3.2
@@ -19,7 +20,6 @@ library
 
 executable zeiterfassung
   main-is:             Main.hs
-  other-modules:       Zeiterfassung
   build-depends:       zeiterfassung
                      , base
   ghc-options:         -Wall

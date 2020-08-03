@@ -1,8 +1,6 @@
 module Main where
 
-import qualified Zeiterfassung (someFunc)
+import Zeiterfassung
 
 main :: IO ()
-main = do
-  putStrLn "Hello, Haskell!"
-  Zeiterfassung.someFunc
+main = readAndTransform
