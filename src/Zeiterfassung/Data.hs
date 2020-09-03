@@ -21,9 +21,12 @@ data Time = Time Int Int
           deriving (Eq, Show)
 
 roundToNextFiveMinutes :: Time -> Time
-roundToNextFiveMinutes (Time h m) = (Time h m')
+roundToNextFiveMinutes (Time h m) = (Time h' m'')
   where 
     remainer = m `mod` 5
     m' = if remainer < 3
             then m - remainer
             else m + (5 - remainer)
+    (h', m'') = case m' of
+                  60 -> (h + 1, 0)
+                  _  -> (h, m')

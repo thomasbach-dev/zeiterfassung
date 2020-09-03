@@ -16,3 +16,5 @@ spec = do
     it "Ceils on 3s, 4s, 8s and 9s" $
       map roundToNextFiveMinutes [Time 0 3, Time 0 14, Time 0 28, Time 0 39] 
         `shouldBe`               [Time 0 5, Time 0 15, Time 0 30, Time 0 40]
+    it "Also rounds up to the next hour correctly" $
+      roundToNextFiveMinutes (Time 1 58) `shouldBe` Time 2 0
