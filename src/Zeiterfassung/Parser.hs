@@ -29,9 +29,9 @@ pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
                    *> P.char '(' *> pTime *> P.char ')' *> P.spaces
               _ <- P.optional (pTaskState *> P.space)
               subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
-              task <- pTaskFromTags
+              task' <- pTaskFromTags
               _ <- P.newline
-              return (LogLine start end subj task)
+              return (LogLine start end subj task')
 
 pTime :: Parser Time
 pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
@@ -74,7 +74,8 @@ pTaskFromTags :: Parser Task
 pTaskFromTags = head <$> (P.char ':' *> pTask `P.endBy` (P.char ':'))
 
 pTask :: Parser Task
-pTask = P.choice [ Q4_CONSULTING <$ P.string "q4_cons"
-                 , UPG_TO_44     <$ P.string "upg_to_44"
+pTask = P.choice [ CONSULTING_ORG <$ P.try (P.string "cons_org")
+                 , CONSULTING_Q4  <$ P.string "cons_q4"
+                 , UPG_TO_44      <$ P.string "upg_to_44"
                  ]
   
