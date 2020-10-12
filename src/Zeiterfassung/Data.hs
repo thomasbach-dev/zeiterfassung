@@ -1,6 +1,7 @@
 module Zeiterfassung.Data
    ( AgendaLog
    , LogLine(..)
+   , Task(..)
    , Time(..)
    , roundToNextFiveMinutes
    ) where
@@ -14,8 +15,12 @@ type AgendaLog = [(Day, [LogLine])]
 data LogLine = LogLine { startTime :: Time
                        , endTime :: Time
                        , subject :: T.Text
+                       , task :: Task
                        }
              deriving (Eq, Show)
+
+data Task = Q4_CONSULTING | UPG_TO_44
+          deriving (Eq, Show)
 
 data Time = Time Int Int
           deriving (Eq, Show)

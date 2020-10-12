@@ -2,6 +2,7 @@ module Zeiterfassung.Parser
   ( pAgendaLog
   , pLogLine
   , pDate
+  , pTaskFromTags
   ) where
 
 import Control.Applicative ((<$))
@@ -27,8 +28,10 @@ pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
               _ <- P.space *> P.string "Clocked:" *> P.spaces
                    *> P.char '(' *> pTime *> P.char ')' *> P.spaces
               _ <- P.optional (pTaskState *> P.space)
-              subj <- T.pack <$> P.anyChar `P.manyTill` P.newline
-              return (LogLine start end subj)
+              subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
+              task <- pTaskFromTags
+              _ <- P.newline
+              return (LogLine start end subj task)
 
 pTime :: Parser Time
 pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
@@ -53,12 +56,11 @@ pDay :: Parser Int
 pDay = read <$> (P.many1 P.digit)
 
 pMonth :: Parser Int
-pMonth = 
-  P.choice [ 7  <$ P.string "July"
-           , 8  <$ P.string "August"
-           , 9  <$ P.string "September"
-           , 10 <$ P.string "October"
-           ]
+pMonth = P.choice [ 7  <$ P.string "July"
+                  , 8  <$ P.string "August"
+                  , 9  <$ P.string "September"
+                  , 10 <$ P.string "October"
+                  ]
 
 pYear :: Parser Integer
 pYear = read <$> P.count 4 P.digit
@@ -67,3 +69,12 @@ pWeekday :: Parser String
 pWeekday = P.choice $
   map (P.try . P.string) [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
                          , "Saturday", "Sunday"]
+
+pTaskFromTags :: Parser Task
+pTaskFromTags = head <$> (P.char ':' *> pTask `P.endBy` (P.char ':'))
+
+pTask :: Parser Task
+pTask = P.choice [ Q4_CONSULTING <$ P.string "q4_cons"
+                 , UPG_TO_44     <$ P.string "upg_to_44"
+                 ]
+  
