@@ -54,8 +54,10 @@ pDay = read <$> (P.many1 P.digit)
 
 pMonth :: Parser Int
 pMonth = 
-  P.choice [ 7 <$ P.string "July"
-           , 8 <$ P.string "August"
+  P.choice [ 7  <$ P.string "July"
+           , 8  <$ P.string "August"
+           , 9  <$ P.string "September"
+           , 10 <$ P.string "October"
            ]
 
 pYear :: Parser Integer
