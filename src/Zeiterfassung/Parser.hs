@@ -5,7 +5,6 @@ module Zeiterfassung.Parser
   , pTaskFromTags
   ) where
 
-import Control.Applicative ((<$))
 import Data.Time (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
