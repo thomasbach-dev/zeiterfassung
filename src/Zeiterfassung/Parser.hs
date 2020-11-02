@@ -77,5 +77,7 @@ pTask :: Parser Task
 pTask = P.choice [ CONSULTING_ORG <$ P.try (P.string "cons_org")
                  , CONSULTING_Q4  <$ P.string "cons_q4"
                  , UPG_TO_44      <$ P.string "upg_to_44"
+                 , ADMIN2         <$ P.string "admin2"
+                 , SOAP5          <$ P.string "soap5"
                  ]
   
