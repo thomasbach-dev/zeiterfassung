@@ -38,7 +38,7 @@ pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
            return (Time hour minute)
 
 pTaskState :: Parser String
-pTaskState = (P.try . P.choice . map P.string) ["TODO", "DONE"]
+pTaskState = (P.try . P.choice . map P.string) ["TODO", "NEEDSFEEDBACK", "DONE"]
 
 pDate :: Parser Day
 pDate = do _ <- pWeekday
@@ -59,6 +59,7 @@ pMonth = P.choice [ 7  <$ P.string "July"
                   , 8  <$ P.string "August"
                   , 9  <$ P.string "September"
                   , 10 <$ P.string "October"
+                  , 11 <$ P.string "November"
                   ]
 
 pYear :: Parser Integer
@@ -78,5 +79,6 @@ pTask = P.choice [ CONSULTING_ORG <$ P.try (P.string "cons_org")
                  , UPG_TO_44      <$ P.string "upg_to_44"
                  , ADMIN2         <$ P.string "admin2"
                  , SOAP5          <$ P.string "soap5"
+                 , BPSOrder       <$ P.string "bpsorder"
                  ]
   

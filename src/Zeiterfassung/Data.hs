@@ -41,6 +41,7 @@ data Task = CONSULTING_ORG
           | UPG_TO_44
           | ADMIN2
           | SOAP5
+          | BPSOrder
           deriving (Eq, Show)
 
 instance ToSpreadsheet Task where
@@ -49,6 +50,7 @@ instance ToSpreadsheet Task where
   toSpreadsheet UPG_TO_44      = "OX IN8 - R6.45 - CR107/8 - Upgrade to UCS 4.4"
   toSpreadsheet ADMIN2         = "OX IN8 - R6.11 - CR205/ADMIN-2: Admin Portal - Administration of storage on Mailbox"
   toSpreadsheet SOAP5          = "OX IN8 - R6.11 - CR205/SOAP-5: Soap - mailBoxInformation"
+  toSpreadsheet BPSOrder       = "OX IN8 - R6.11 - CR213/INU-2505: bps order through IOSW"
 
 data Time = Time Int Int
           deriving (Eq, Show)
