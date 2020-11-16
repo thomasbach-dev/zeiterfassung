@@ -42,15 +42,17 @@ data Task = CONSULTING_ORG
           | ADMIN2
           | SOAP5
           | BPSOrder
+          | MailDeletionFlow
           deriving (Eq, Show)
 
 instance ToSpreadsheet Task where
-  toSpreadsheet CONSULTING_ORG = "Consulting: Organisation"
-  toSpreadsheet CONSULTING_Q4  = "OX IN8 - 2020 Q4 - consulting and project management"
-  toSpreadsheet UPG_TO_44      = "OX IN8 - R6.45 - CR107/8 - Upgrade to UCS 4.4"
-  toSpreadsheet ADMIN2         = "OX IN8 - R6.11 - CR205/ADMIN-2: Admin Portal - Administration of storage on Mailbox"
-  toSpreadsheet SOAP5          = "OX IN8 - R6.11 - CR205/SOAP-5: Soap - mailBoxInformation"
-  toSpreadsheet BPSOrder       = "OX IN8 - R6.11 - CR213/INU-2505: bps order through IOSW"
+  toSpreadsheet CONSULTING_ORG   = "Consulting: Organisation"
+  toSpreadsheet CONSULTING_Q4    = "OX IN8 - 2020 Q4 - consulting and project management"
+  toSpreadsheet UPG_TO_44        = "OX IN8 - R6.45 - CR107/8 - Upgrade to UCS 4.4"
+  toSpreadsheet ADMIN2           = "OX IN8 - R6.11 - CR205/ADMIN-2: Admin Portal - Administration of storage on Mailbox"
+  toSpreadsheet SOAP5            = "OX IN8 - R6.11 - CR205/SOAP-5: Soap - mailBoxInformation"
+  toSpreadsheet BPSOrder         = "OX IN8 - R6.11 - CR213/INU-2505: bps order through IOSW"
+  toSpreadsheet MailDeletionFlow = "OX IN8 - R6.11 - CRxxx/INU-2972: Mailbox deletion flow description"
 
 data Time = Time Int Int
           deriving (Eq, Show)
