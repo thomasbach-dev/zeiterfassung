@@ -32,10 +32,13 @@ spec = do
   describe "pLogLine" $ do
     it "Parses a log line" $
       P.parse pLogLine "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q4:\n"
-        `shouldBe` Right (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" CONSULTING_Q4)
+        `shouldBe` (Right . Just) (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" CONSULTING_Q4)
     it "Skips the task state" $
       P.parse pLogLine "" "  gtd02:      10:50-12:55 Clocked:   (2:05) TODO [INU-2697] Soap - Light2Full :upg_to_44:\n"
-        `shouldBe` Right (LogLine (Time 10 50) (Time 12 55) "[INU-2697] Soap - Light2Full" UPG_TO_44)
+        `shouldBe` (Right . Just) (LogLine (Time 10 50) (Time 12 55) "[INU-2697] Soap - Light2Full" UPG_TO_44)
+    it "Throws away an entry with an active clock" $
+       P.parse pLogLine "" "  gtd03:      15:00...... Daily/Weekly                    :cons_org:\n"
+         `shouldBe` Right Nothing
   describe "pTaskFromTags" $ do 
     it "Parses a single task" $
       P.parse pTaskFromTags "" ":cons_q4:"

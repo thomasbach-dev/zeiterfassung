@@ -5,6 +5,7 @@ module Zeiterfassung.Parser
   , pTaskFromTags
   ) where
 
+import Data.Maybe (catMaybes)
 import Data.Time (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
@@ -17,20 +18,25 @@ pAgendaLog :: Parser AgendaLog
 pAgendaLog = do _ <- P.optional (P.string "Week-agend" 
                                  *> P.anyChar `P.manyTill` P.newline)
                 P.many ((,) <$> pDate
-                            <*> (pLogLine `P.manyTill` ((const () <$> P.lookAhead pDate) P.<|> P.eof)))
+                            <*> (catMaybes <$> pLogLine `P.manyTill` ((const () <$> P.lookAhead pDate) P.<|> P.eof)))
 
-pLogLine :: Parser LogLine
+pLogLine :: Parser (Maybe LogLine)
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
-              start <- pTime
-              _ <- P.char '-' *> P.optional P.space
-              end <- pTime
-              _ <- P.space *> P.string "Clocked:" *> P.spaces
-                   *> P.char '(' *> pTime *> P.char ')' *> P.spaces
-              _ <- P.optional (pTaskState *> P.space)
-              subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
-              task' <- pTaskFromTags
-              _ <- P.newline
-              return (LogLine start end subj task')
+              P.try (Just <$> pClockedTask) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
+
+pClockedTask :: Parser LogLine
+pClockedTask = 
+  do start <- pTime
+     _ <- P.char '-' *> P.optional P.space
+     end <- pTime
+     _ <- P.space *> P.string "Clocked:" *> P.spaces
+          *> P.char '(' *> pTime *> P.char ')' *> P.spaces
+     _ <- P.optional (pTaskState *> P.space)
+     subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
+     task' <- pTaskFromTags
+     _ <- P.newline
+     return (LogLine start end subj task')
+
 
 pTime :: Parser Time
 pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
