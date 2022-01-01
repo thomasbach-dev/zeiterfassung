@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Zeiterfassung.ParserSpec (spec) where
 
+import qualified Text.Parsec as P
+
 import Data.Text  (Text)
 import Data.Time  (fromGregorian)
-import Test.Hspec
-
-import qualified Text.Parsec as P
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 import Zeiterfassung.Data
 import Zeiterfassung.Parser
