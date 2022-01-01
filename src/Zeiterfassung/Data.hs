@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Zeiterfassung.Data
    ( AgendaLog
    , ToSpreadsheet(..)
@@ -10,7 +10,7 @@ module Zeiterfassung.Data
    ) where
 
 import qualified Data.Text as T
-import Data.Time (Day, defaultTimeLocale, formatTime)
+import           Data.Time (Day, defaultTimeLocale, formatTime)
 
 type AgendaLog = [(Day, [LogLine])]
 
@@ -21,9 +21,9 @@ instance ToSpreadsheet Day where
   toSpreadsheet = T.pack . formatTime defaultTimeLocale "%m/%d/%Y"
 
 data LogLine = LogLine { startTime :: Time
-                       , endTime :: Time
-                       , subject :: T.Text
-                       , task :: Task
+                       , endTime   :: Time
+                       , subject   :: T.Text
+                       , task      :: Task
                        }
              deriving (Eq, Show)
 
@@ -34,10 +34,10 @@ instance ToSpreadsheet LogLine where
                       , toSpreadsheet endTime
                       , ""
                       , subject
-                      ]  
+                      ]
 
-data Task = CONSULTING_ORG 
-          | CONSULTING_Q4 
+data Task = CONSULTING_ORG
+          | CONSULTING_Q4
           | UPG_TO_44
           | ADMIN1
           | ADMIN2
@@ -63,7 +63,7 @@ data Time = Time Int Int
 
 
 instance ToSpreadsheet Time where
-  toSpreadsheet = formatTime' . roundToNextFiveMinutes 
+  toSpreadsheet = formatTime' . roundToNextFiveMinutes
 
 formatTime' :: Time -> T.Text
 formatTime' (Time h m) = T.pack (padZero h <> ":" <> padZero m)
@@ -73,7 +73,7 @@ padZero = reverse . take 2 . reverse . ('0':) . show
 
 roundToNextFiveMinutes :: Time -> Time
 roundToNextFiveMinutes (Time h m) = (Time h' m'')
-  where 
+  where
     remainer = m `mod` 5
     m' = if remainer < 3
             then m - remainer

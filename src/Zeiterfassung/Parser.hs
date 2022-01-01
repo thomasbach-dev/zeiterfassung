@@ -5,17 +5,17 @@ module Zeiterfassung.Parser
   , pTaskFromTags
   ) where
 
-import Data.Maybe (catMaybes)
-import Data.Time (Day, fromGregorian)
+import Data.Maybe       (catMaybes)
+import Data.Time        (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
+import qualified Data.Text   as T
 import qualified Text.Parsec as P
-import qualified Data.Text as T
 
 import Zeiterfassung.Data
 
 pAgendaLog :: Parser AgendaLog
-pAgendaLog = do _ <- P.optional (P.string "Week-agend" 
+pAgendaLog = do _ <- P.optional (P.string "Week-agend"
                                  *> P.anyChar `P.manyTill` P.newline)
                 P.many ((,) <$> pDate
                             <*> (catMaybes <$> pLogLine `P.manyTill` ((const () <$> P.lookAhead pDate) P.<|> P.eof)))
@@ -25,7 +25,7 @@ pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
               P.try (Just <$> pClockedTask) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
 
 pClockedTask :: Parser LogLine
-pClockedTask = 
+pClockedTask =
   do start <- pTime
      _ <- P.char '-' *> P.optional P.space
      end <- pTime
@@ -90,4 +90,4 @@ pTask = P.choice [ CONSULTING_ORG   <$ P.try (P.string "cons_org")
                  , BPSOrder         <$ P.string "bpsorder"
                  , MailDeletionFlow <$ P.string "delflow"
                  ]
-  
+

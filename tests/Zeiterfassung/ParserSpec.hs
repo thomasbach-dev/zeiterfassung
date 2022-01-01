@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Zeiterfassung.ParserSpec (spec) where
 
-import Data.Time (fromGregorian)
-import Data.Text (Text)
+import Data.Text  (Text)
+import Data.Time  (fromGregorian)
 import Test.Hspec
 
 import qualified Text.Parsec as P
@@ -16,7 +16,7 @@ spec = do
     it "Parses an empty agenda log" $
       P.parse pAgendaLog "" example1 `shouldBe` Right [(fromGregorian 2020 7 27, [])]
     it "Parses a full agenda log example" $
-      let expected = 
+      let expected =
             [(fromGregorian 2020 7 27, [ LogLine (Time 10 20) (Time 10 30) "Selbstorganisation" CONSULTING_Q4
                                        , LogLine (Time 11 25) (Time 12 40) "Fix failing tests in 3.2 Branch Tests" UPG_TO_44
                                        ])
@@ -39,7 +39,7 @@ spec = do
     it "Throws away an entry with an active clock" $
        P.parse pLogLine "" "  gtd03:      15:00...... Daily/Weekly                    :cons_org:\n"
          `shouldBe` Right Nothing
-  describe "pTaskFromTags" $ do 
+  describe "pTaskFromTags" $ do
     it "Parses a single task" $
       P.parse pTaskFromTags "" ":cons_q4:"
         `shouldBe` Right CONSULTING_Q4
