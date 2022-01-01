@@ -5,12 +5,12 @@ module Zeiterfassung.Parser
   , pTaskFromTags
   ) where
 
+import qualified Data.Text   as T
+import qualified Text.Parsec as P
+
 import Data.Maybe       (catMaybes)
 import Data.Time        (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
-
-import qualified Data.Text   as T
-import qualified Text.Parsec as P
 
 import Zeiterfassung.Data
 
