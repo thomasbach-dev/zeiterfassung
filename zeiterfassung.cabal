@@ -2,7 +2,6 @@ cabal-version:       3.0
 
 name:                zeiterfassung
 version:             0.1.0.0
-license-file:        LICENSE
 author:              Thomas Bach
 maintainer:          info@thomasbach.dev
 
