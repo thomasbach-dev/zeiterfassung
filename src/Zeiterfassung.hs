@@ -12,7 +12,7 @@ import Zeiterfassung.Parser
 
 readAndTransform :: IO ()
 readAndTransform =
-  either (error . show) TIO.putStrLn =<< fmap toSpreadsheetFormat . P.parse pAgendaLog "" <$> TIO.getContents
+  either (error . show) (TIO.putStrLn . toSpreadsheetFormat) . P.parse pAgendaLog "" =<< TIO.getContents
 
 toSpreadsheetFormat :: AgendaLog -> T.Text
 toSpreadsheetFormat [] = ""

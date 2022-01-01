@@ -28,7 +28,7 @@ data LogLine = LogLine { startTime :: Time
              deriving (Eq, Show)
 
 instance ToSpreadsheet LogLine where
-  toSpreadsheet (LogLine {..}) =
+  toSpreadsheet LogLine {..} =
     T.intercalate "," [ toSpreadsheet task
                       , toSpreadsheet startTime
                       , toSpreadsheet endTime
@@ -72,7 +72,7 @@ padZero :: Int -> String
 padZero = reverse . take 2 . reverse . ('0':) . show
 
 roundToNextFiveMinutes :: Time -> Time
-roundToNextFiveMinutes (Time h m) = (Time h' m'')
+roundToNextFiveMinutes (Time h m) = Time h' m''
   where
     remainer = m `mod` 5
     m' = if remainer < 3

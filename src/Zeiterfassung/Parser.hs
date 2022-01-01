@@ -18,7 +18,7 @@ pAgendaLog :: Parser AgendaLog
 pAgendaLog = do _ <- P.optional (P.string "Week-agend"
                                  *> P.anyChar `P.manyTill` P.newline)
                 P.many ((,) <$> pDate
-                            <*> (catMaybes <$> pLogLine `P.manyTill` ((const () <$> P.lookAhead pDate) P.<|> P.eof)))
+                            <*> (catMaybes <$> pLogLine `P.manyTill` ((() <$ P.lookAhead pDate) P.<|> P.eof)))
 
 pLogLine :: Parser (Maybe LogLine)
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
@@ -58,7 +58,7 @@ pDate = do _ <- pWeekday
            return (fromGregorian year month day)
 
 pDay :: Parser Int
-pDay = read <$> (P.many1 P.digit)
+pDay = read <$> P.many1 P.digit
 
 pMonth :: Parser Int
 pMonth = P.choice [ 7  <$ P.string "July"
@@ -77,7 +77,7 @@ pWeekday = P.choice $
                          , "Saturday", "Sunday"]
 
 pTaskFromTags :: Parser Task
-pTaskFromTags = head <$> (P.char ':' *> pTask `P.endBy` (P.char ':'))
+pTaskFromTags = head <$> (P.char ':' *> pTask `P.endBy` P.char ':')
 
 pTask :: Parser Task
 pTask = P.choice [ CONSULTING_ORG   <$ P.try (P.string "cons_org")
