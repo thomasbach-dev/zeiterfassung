@@ -11,8 +11,7 @@ import Zeiterfassung.Data
 import Zeiterfassung.Parser
 
 readAndTransform :: IO ()
-readAndTransform =
-  either (error . show) (TIO.putStrLn . toSpreadsheetFormat) . P.parse pAgendaLog "" =<< TIO.getContents
+readAndTransform = TIO.interact $ either (error . show) toSpreadsheetFormat . P.parse pAgendaLog ""
 
 toSpreadsheetFormat :: AgendaLog -> T.Text
 toSpreadsheetFormat [] = ""
