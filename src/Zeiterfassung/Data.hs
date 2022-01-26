@@ -36,27 +36,14 @@ instance ToSpreadsheet LogLine where
                       , subject
                       ]
 
-data Task = CONSULTING_ORG
-          | CONSULTING_Q4
-          | UPG_TO_44
-          | ADMIN1
-          | ADMIN2
-          | ADMIN3
-          | SOAP5
-          | BPSOrder
-          | MailDeletionFlow
-          deriving (Eq, Show)
+data Task = CONSULTING_Q1_2022
+          | WARRANTY
+          deriving (Bounded, Enum, Eq, Show)
 
 instance ToSpreadsheet Task where
-  toSpreadsheet CONSULTING_ORG   = "Consulting: Organisation"
-  toSpreadsheet CONSULTING_Q4    = "OX IN8 - 2020 Q4 - consulting and project management"
-  toSpreadsheet UPG_TO_44        = "OX IN8 - R6.45 - CR107/8 - Upgrade to UCS 4.4"
-  toSpreadsheet ADMIN1           = "OX IN8 - R6.11 - CR205/ADMIN-1: Admin Portal - Administration of storage on Site"
-  toSpreadsheet ADMIN2           = "OX IN8 - R6.11 - CR205/ADMIN-2: Admin Portal - Administration of storage on Mailbox"
-  toSpreadsheet ADMIN3           = "OX IN8 - R6.11 - CR205/ADMIN-3: Admin Portal - Massprov"
-  toSpreadsheet SOAP5            = "OX IN8 - R6.11 - CR205/SOAP-5: Soap - mailBoxInformation"
-  toSpreadsheet BPSOrder         = "OX IN8 - R6.11 - CR213/INU-2505: bps order through IOSW"
-  toSpreadsheet MailDeletionFlow = "OX IN8 - R6.11 - CR225/INU-3043: Mailbox deletion flow"
+  toSpreadsheet CONSULTING_Q1_2022 = "OX IN8 - 2022 Q1 - consulting and project management"
+  toSpreadsheet WARRANTY =
+    "OX NewMail (32129): R6.45.1 - Gewährleistung/Eskalation für R6.45.0 - abrechenbar (32129)"
 
 data Time = Time Int Int
           deriving (Eq, Show)
