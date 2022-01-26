@@ -32,11 +32,11 @@ pClockedTask =
      _ <- P.space *> P.string "Clocked:" *> P.spaces
           *> P.char '(' *> pTime *> P.char ')' *> P.spaces
      _ <- P.optional (pTaskState *> P.space)
+     _ <- P.optional (pPriority *> P.space)
      subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
      task' <- pTaskFromTags
      _ <- P.newline
      return (LogLine start end subj task')
-
 
 pTime :: Parser Time
 pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
@@ -45,6 +45,9 @@ pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
 
 pTaskState :: Parser String
 pTaskState = (P.try . P.choice . map P.string) ["TODO", "NEEDSFEEDBACK", "DONE"]
+
+pPriority :: Parser String
+pPriority = P.string "[#" *> P.anyChar `P.manyTill` P.char ']'
 
 pDate :: Parser Day
 pDate = do _ <- pWeekday
@@ -61,7 +64,8 @@ pDay :: Parser Int
 pDay = read <$> P.many1 P.digit
 
 pMonth :: Parser Int
-pMonth = P.choice [ 7  <$ P.string "July"
+pMonth = P.choice [ 1  <$ P.try (P.string "January")
+                  , 7  <$ P.string "July"
                   , 8  <$ P.string "August"
                   , 9  <$ P.string "September"
                   , 10 <$ P.string "October"
