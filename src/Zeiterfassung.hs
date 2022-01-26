@@ -7,8 +7,6 @@ import qualified Data.Text    as T
 import qualified Data.Text.IO as TIO
 import qualified Text.Parsec  as P
 
-import Data.Time (defaultTimeLocale, formatTime)
-
 import Zeiterfassung.Data
 import Zeiterfassung.Parser
 
