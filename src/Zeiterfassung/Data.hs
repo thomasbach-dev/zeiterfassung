@@ -18,7 +18,7 @@ class ToSpreadsheet a where
   toSpreadsheet :: a -> T.Text
 
 instance ToSpreadsheet Day where
-  toSpreadsheet = T.pack . formatTime defaultTimeLocale "%m/%d/%Y"
+  toSpreadsheet = T.pack . formatTime defaultTimeLocale "%d.%m.%Y"
 
 data LogLine = LogLine { startTime :: Time
                        , endTime   :: Time
@@ -47,7 +47,6 @@ instance ToSpreadsheet Task where
 
 data Time = Time Int Int
           deriving (Eq, Show)
-
 
 instance ToSpreadsheet Time where
   toSpreadsheet = formatTime' . roundToNextFiveMinutes
