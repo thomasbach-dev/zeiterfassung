@@ -33,6 +33,9 @@ spec = do
     it "Parses a log line" $
       P.parse pLogLine "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22:\n"
         `shouldBe` (Right . Just) (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" CONSULTING_Q1_2022)
+    it "Handles tags from super-tasks correctly" $
+      P.parse pLogLine "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22::\n"
+        `shouldBe` (Right . Just) (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" CONSULTING_Q1_2022)
     it "Skips the task state" $
       P.parse pLogLine "" "  gtd02:      10:50-12:55 Clocked:   (2:05) TODO [INU-2697] Soap - Light2Full :war:\n"
         `shouldBe` (Right . Just) (LogLine (Time 10 50) (Time 12 55) "[INU-2697] Soap - Light2Full" WARRANTY)
