@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Zeiterfassung.ParserSpec (spec) where
 
 import qualified Text.Parsec as P

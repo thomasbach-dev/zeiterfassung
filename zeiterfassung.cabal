@@ -11,6 +11,8 @@ common common-options
                      , text
                      , time
   default-language:    Haskell2010
+  default-extensions:  OverloadedStrings
+                     , RecordWildCards
   ghc-options:         -Wall
                        -Wcompat
                        -Wincomplete-record-updates

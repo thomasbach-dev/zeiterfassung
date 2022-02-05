@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 module Zeiterfassung.Data
    ( AgendaLog
    , ToSpreadsheet(..)
