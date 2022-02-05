@@ -8,7 +8,8 @@ module Zeiterfassung.Data
    ) where
 
 import qualified Data.Text as T
-import           Data.Time (Day, defaultTimeLocale, formatTime)
+
+import Data.Time (Day, defaultTimeLocale, formatTime)
 
 type AgendaLog = [(Day, [LogLine])]
 
@@ -18,12 +19,12 @@ class ToSpreadsheet a where
 instance ToSpreadsheet Day where
   toSpreadsheet = T.pack . formatTime defaultTimeLocale "%d.%m.%Y"
 
-data LogLine = LogLine { startTime :: Time
-                       , endTime   :: Time
-                       , subject   :: T.Text
-                       , task      :: Task
-                       }
-             deriving (Eq, Show)
+data LogLine = LogLine
+  { startTime :: Time
+  , endTime   :: Time
+  , subject   :: T.Text
+  , task      :: Task
+  } deriving (Eq, Show)
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet LogLine {..} =
