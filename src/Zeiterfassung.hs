@@ -21,6 +21,7 @@ readAndTransform = do
 
 toSpreadsheetFormat :: AgendaLog -> T.Text
 toSpreadsheetFormat [] = ""
-toSpreadsheetFormat ((day,logs):rst) = formatted <> toSpreadsheetFormat rst
+toSpreadsheetFormat ((day,logs): rst) = formatted <> toSpreadsheetFormat rst
   where
-    formatted = (T.unlines . map (((toSpreadsheet day <> ",") <>) . toSpreadsheet)) logs
+    formatted = T.unlines $ map (prefixDay . toSpreadsheet) logs
+    prefixDay l = toSpreadsheet day <> "," <> l
