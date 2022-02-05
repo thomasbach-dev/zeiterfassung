@@ -7,11 +7,17 @@ import qualified Data.Text    as T
 import qualified Data.Text.IO as TIO
 import qualified Text.Parsec  as P
 
+import System.Exit (die)
+
 import Zeiterfassung.Data
 import Zeiterfassung.Parser
 
 readAndTransform :: IO ()
-readAndTransform = TIO.interact $ either (error . show) toSpreadsheetFormat . P.parse pAgendaLog ""
+readAndTransform = do
+  input <- TIO.getContents
+  case P.parse pAgendaLog "" input of
+    Left err     -> die $ show err
+    Right parsed -> TIO.putStrLn $ toSpreadsheetFormat parsed
 
 toSpreadsheetFormat :: AgendaLog -> T.Text
 toSpreadsheetFormat [] = ""
