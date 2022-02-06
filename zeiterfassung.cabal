@@ -23,8 +23,8 @@ common common-options
 library
   import:              common-options
   exposed-modules:     Zeiterfassung
-                     , Zeiterfassung.Data
                      , Zeiterfassung.Parser
+                     , Zeiterfassung.Representation
   hs-source-dirs:      src
 
 executable zeiterfassung

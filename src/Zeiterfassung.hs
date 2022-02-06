@@ -7,8 +7,8 @@ import qualified Text.Parsec  as P
 
 import System.Exit (die)
 
-import Zeiterfassung.Data
 import Zeiterfassung.Parser
+import Zeiterfassung.Representation
 
 readAndTransform :: IO ()
 readAndTransform = do

@@ -1,8 +1,8 @@
-module Zeiterfassung.DataSpec (spec) where
+module Zeiterfassung.RepresentationSpec (spec) where
 
 import Test.Hspec (Spec, describe, it, shouldBe)
 
-import Zeiterfassung.Data
+import Zeiterfassung.Representation
 
 spec :: Spec
 spec = do

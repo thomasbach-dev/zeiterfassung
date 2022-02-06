@@ -6,8 +6,8 @@ import Data.Text  (Text)
 import Data.Time  (fromGregorian)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
-import Zeiterfassung.Data
 import Zeiterfassung.Parser
+import Zeiterfassung.Representation
 
 spec :: Spec
 spec = do

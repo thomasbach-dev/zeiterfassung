@@ -12,7 +12,7 @@ import Data.Maybe       (catMaybes)
 import Data.Time        (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
 
-import Zeiterfassung.Data
+import Zeiterfassung.Representation
 
 pAgendaLog :: Parser AgendaLog
 pAgendaLog = do _ <- P.optional (P.string "Week-agend"

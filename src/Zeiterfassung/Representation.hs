@@ -1,4 +1,4 @@
-module Zeiterfassung.Data
+module Zeiterfassung.Representation
    ( AgendaLog
    , ToSpreadsheet(..)
    , LogLine(..)
