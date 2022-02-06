@@ -16,6 +16,14 @@ type AgendaLog = [(Day, [LogLine])]
 class ToSpreadsheet a where
   toSpreadsheet :: a -> T.Text
 
+instance ToSpreadsheet AgendaLog where
+  toSpreadsheet = T.concat . map toSpreadsheet
+
+instance ToSpreadsheet (Day, [LogLine]) where
+  toSpreadsheet (day, logs) = T.unlines $ map (prefixDay . toSpreadsheet) logs
+    where
+      prefixDay l = toSpreadsheet day <> "," <> l
+
 instance ToSpreadsheet Day where
   toSpreadsheet = T.pack . formatTime defaultTimeLocale "%d.%m.%Y"
 
