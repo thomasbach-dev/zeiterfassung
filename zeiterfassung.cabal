@@ -25,6 +25,7 @@ library
   exposed-modules:     Zeiterfassung
                      , Zeiterfassung.Parser
                      , Zeiterfassung.Representation
+                     , Zeiterfassung.ToSpreadsheet
   hs-source-dirs:      src
 
 executable zeiterfassung
