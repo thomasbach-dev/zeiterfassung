@@ -43,4 +43,5 @@ test-suite zeiterfassung-tests
   main-is:             Main.hs
   build-depends:       zeiterfassung
                      , hspec
+  build-tool-depends:  hspec-discover:hspec-discover
   ghc-options:         -Wno-missing-home-modules
