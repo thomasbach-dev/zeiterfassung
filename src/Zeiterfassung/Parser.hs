@@ -44,7 +44,7 @@ pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
            return (Time hour minute)
 
 pTaskState :: Parser String
-pTaskState = (P.try . P.choice . map P.string) ["TODO", "NEEDSFEEDBACK", "DONE"]
+pTaskState = (P.try . P.choice . map P.string) ["TODO", "WAIT", "DONE", "CANC"]
 
 pPriority :: Parser String
 pPriority = P.try (P.string "[#" *> P.anyChar `P.manyTill` P.char ']')
