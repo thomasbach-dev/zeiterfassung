@@ -1,8 +1,8 @@
 {
   description = "A very basic flake";
   inputs = {
-    haskellNix.url = "github:input-output-hk/haskell.nix/75029d4231f1db9708e57feaa9d401eb1d831d19";
-    flake-utils.url = "github:numtide/flake-utils/74f7e4319258e287b0f9cb95426c9853b282730b";
+    haskellNix.url = "github:input-output-hk/haskell.nix/29433c04fa097b50be67c5b799eb7a87982cd900";
+    flake-utils.url = "github:numtide/flake-utils/3cecb5b042f7f209c56ffd8371b2711a290ec797";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   };
   outputs = { self, nixpkgs, flake-utils, haskellNix }:
