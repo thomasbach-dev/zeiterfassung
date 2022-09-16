@@ -6,7 +6,9 @@ author:              Thomas Bach
 maintainer:          info@thomasbach.dev
 
 common common-options
-  build-depends:     , base
+  build-depends:       aeson
+                     , base
+                     , containers
                      , parsec
                      , text
                      , time
@@ -23,6 +25,7 @@ common common-options
 library
   import:              common-options
   exposed-modules:     Zeiterfassung
+                     , Zeiterfassung.Config
                      , Zeiterfassung.Parser
                      , Zeiterfassung.Representation
                      , Zeiterfassung.ToSpreadsheet

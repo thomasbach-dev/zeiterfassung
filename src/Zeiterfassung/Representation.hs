@@ -1,7 +1,7 @@
 module Zeiterfassung.Representation
    ( AgendaLog
    , LogLine(..)
-   , Task(..)
+   , Task
    , Time(..)
    , roundToNextFiveMinutes
    ) where
@@ -19,9 +19,7 @@ data LogLine = LogLine
   , task      :: Task
   } deriving (Eq, Show)
 
-data Task = CONSULTING_Q1_2022
-          | WARRANTY
-          deriving (Bounded, Enum, Eq, Show)
+type Task = T.Text
 
 data Time = Time Int Int
           deriving (Eq, Show)

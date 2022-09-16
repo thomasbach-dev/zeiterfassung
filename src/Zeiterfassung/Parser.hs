@@ -87,10 +87,7 @@ pWeekday = P.choice $
                          , "Saturday", "Sunday"]
 
 pTaskFromTags :: Parser Task
-pTaskFromTags = head <$> (P.char ':' *> pTask `P.endBy` P.char ':') <* P.optional (P.char ':')
+pTaskFromTags = T.pack <$> (pColon *> P.anyChar `P.manyTill` pColon) <* P.optional pColon
 
-pTask :: Parser Task
-pTask = P.choice [ CONSULTING_Q1_2022 <$ P.string "cons_q1_22"
-                 , WARRANTY           <$ P.string "war"
-                 ]
-
+pColon :: Parser Char
+pColon = P.char ':'

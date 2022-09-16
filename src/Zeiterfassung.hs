@@ -7,13 +7,17 @@ import qualified Text.Parsec  as P
 
 import System.Exit (die)
 
+import Zeiterfassung.Config
 import Zeiterfassung.Parser
 import Zeiterfassung.ToSpreadsheet
 
-readAndTransform :: IO ()
-readAndTransform = do
+readAndTransform :: FilePath -> IO ()
+readAndTransform configFile = do
+  cfg <- readConfig configFile
   input <- TIO.getContents
   case P.parse pAgendaLog "" input of
     Left err     -> die $ show err
-    Right parsed -> TIO.putStrLn $ toSpreadsheet parsed
+    Right parsed -> do
+      -- print parsed
+      TIO.putStrLn $ toSpreadsheet cfg parsed
 
