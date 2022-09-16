@@ -64,12 +64,18 @@ pDay :: Parser Int
 pDay = read <$> P.many1 P.digit
 
 pMonth :: Parser Int
-pMonth = P.choice [ 1  <$ P.try (P.string "January")
-                  , 7  <$ P.string "July"
-                  , 8  <$ P.string "August"
-                  , 9  <$ P.string "September"
+pMonth = P.choice [  1 <$ P.try (P.string "January")
+                  ,  2 <$ P.string "February"
+                  ,  3 <$ P.try (P.string "March")
+                  ,  4 <$ P.try (P.string "April")
+                  ,  5 <$ P.string "May"
+                  ,  6 <$ P.try (P.string "June")
+                  ,  7 <$ P.string "July"
+                  ,  8 <$ P.string "August"
+                  ,  9 <$ P.string "September"
                   , 10 <$ P.string "October"
                   , 11 <$ P.string "November"
+                  , 12 <$ P.string "December"
                   ]
 
 pYear :: Parser Integer
