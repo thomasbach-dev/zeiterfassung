@@ -15,10 +15,16 @@ import Text.Parsec.Text (Parser)
 import Zeiterfassung.Representation
 
 pAgendaLog :: Parser AgendaLog
-pAgendaLog = do _ <- P.optional (P.string "Week-agend"
-                                 *> P.anyChar `P.manyTill` P.newline)
+pAgendaLog = do _ <- P.optional pHeader
                 P.many ((,) <$> pDate
                             <*> (catMaybes <$> pLogLine `P.manyTill` ((() <$ P.lookAhead pDate) P.<|> P.eof)))
+
+pHeader :: Parser String
+pHeader = pWeekAgendaHeader
+          P.<|> pDaysAgendaHeader
+  where
+    pWeekAgendaHeader = P.string "Week-agend" *> P.anyChar `P.manyTill` P.newline
+    pDaysAgendaHeader = P.digit *> P.optional P.digit *> P.space *> P.string "days-agenda" *> P.anyChar `P.manyTill` P.newline
 
 pLogLine :: Parser (Maybe LogLine)
 pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
@@ -29,7 +35,7 @@ pClockedTask =
   do start <- pTime
      _ <- P.char '-' *> P.optional P.space
      end <- pTime
-     _ <- P.space *> P.string "Clocked:" *> P.spaces
+     _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
           *> P.char '(' *> pTime *> P.char ')' *> P.spaces
      _ <- P.optional (pTaskState *> P.space)
      _ <- P.optional (pPriority *> P.space)

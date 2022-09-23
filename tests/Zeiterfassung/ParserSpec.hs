@@ -23,6 +23,13 @@ spec = do
             ,(fromGregorian 2020 8  2, [])
             ]
       in P.parse pAgendaLog "" example2 `shouldBe` Right expected
+    it "Parses example 3" $
+      let expected =
+            [(fromGregorian 2022 9 1, [ LogLine (Time  6 54) (Time  7 05) "Configure VPN" "bsb_iserv"
+                                      , LogLine (Time  8 50) (Time  9 23) "Daily Orga and Stand Up" "bsb_iserv"
+                                      , LogLine (Time  9 23) (Time 11 12) "Project Intro" "bsb_iserv"
+                                      ])]
+      in P.parse pAgendaLog "" example3 `shouldBe` Right expected
   describe "pDate" $ do
     it "Parses a date" $
       P.parse pDate "" "Tuesday    28 July 2020\n" `shouldBe` Right (fromGregorian 2020 7 28)
@@ -41,6 +48,9 @@ spec = do
     it "Throws away an entry with an active clock" $
        P.parse pLogLine "" "  gtd03:      15:00...... Daily/Weekly                    :cons_q1_22:\n"
          `shouldBe` Right Nothing
+    it "parses log line with double space" $
+       P.parse pLogLine "" "  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv:\n"
+         `shouldBe` (Right . Just) (LogLine (Time 6 54) (Time 7 05) "Configure VPN" "bsb_iserv")
   describe "pTaskFromTags" $ do
     it "Parses a single task" $
       P.parse pTaskFromTags "" ":cons_q1_22:"
@@ -61,4 +71,14 @@ example2 =
    \Tuesday    28 July 2020\n\
    \  gtd02:      10:45-11:05 Clocked:   (0:20) TODO [INU-2697] Soap - Light2Full          :cons_q1_22:\n\
    \Sunday      2 August 2020\n\
+   \"
+
+example3 :: Text
+example3 =
+  "15 days-agenda (W35-W37):\n\
+   \Thursday    1 September 2022\n\
+   \  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv:\n\
+   \  UNV:         8:50-9:23  Clocked:   (0:33) Daily Orga and Stand Up          :bsb_iserv:\n\
+   \  UNV:         9:00...... Daily Orga and Stand Up                            :bsb_iserv:\n\
+   \  UNV:         9:23-11:12 Clocked:   (1:49) Project Intro                    :bsb_iserv:\n\
    \"
