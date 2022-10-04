@@ -23,7 +23,7 @@ instance ToSpreadsheet (Day, [LogLine]) where
      prefixDay l = toSpreadsheet cfg day <> "," <> l
 
 instance ToSpreadsheet Day where
-  toSpreadsheet _ = T.pack . formatTime defaultTimeLocale "%d.%m.%Y"
+  toSpreadsheet _ = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
