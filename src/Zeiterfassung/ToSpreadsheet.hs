@@ -43,5 +43,5 @@ instance ToSpreadsheet Time where
 formatTime' :: Time -> T.Text
 formatTime' (Time h m) = T.pack (padZero h <> ":" <> padZero m)
 
-padZero :: Int -> String
+padZero :: Word -> String
 padZero = reverse . take 2 . reverse . ('0':) . show
