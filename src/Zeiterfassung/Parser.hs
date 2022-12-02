@@ -24,8 +24,7 @@ pAgendaLog = do
     catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
 
 pHeader :: Parser String
-pHeader = pWeekAgendaHeader
-          P.<|> pDaysAgendaHeader
+pHeader = pWeekAgendaHeader P.<|> pDaysAgendaHeader
   where
     pWeekAgendaHeader = P.string "Week-agend" *> P.anyChar `P.manyTill` P.newline
     pDaysAgendaHeader = P.digit *> P.optional P.digit *> P.space *> P.string "days-agenda" *> P.anyChar `P.manyTill` P.newline
@@ -36,17 +35,17 @@ pLogLine day = do
   P.try (Just <$> pClockedTask day) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
 
 pClockedTask :: Day -> Parser LogLine
-pClockedTask day =
-  do start <- timeOnDay <$> pTime
-     _ <- P.char '-' *> P.optional P.space
-     end <- timeOnDay <$> pTime
-     _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
-          *> P.char '(' *> pTime *> P.char ')' *> P.spaces
-     _ <- P.optional (pTaskState *> P.space)
-     _ <- P.optional (pPriority)
-     _ <- P.spaces
-     (descr, tasks') <- pDescriptionAndTasksWithNewline
-     return (LogLine start end descr tasks')
+pClockedTask day = do
+  start <- timeOnDay <$> pTime
+  _ <- P.char '-' *> P.optional P.space
+  end <- timeOnDay <$> pTime
+  _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
+       *> P.char '(' *> pTime *> P.char ')' *> P.spaces
+  _ <- P.optional (pTaskState *> P.space)
+  _ <- P.optional (pPriority)
+  _ <- P.spaces
+  (descr, tasks') <- pDescriptionAndTasksWithNewline
+  pure (LogLine start end descr tasks')
   where
     timeOnDay tod = UTCTime day (timeOfDayToTime tod)
 
@@ -78,15 +77,16 @@ pPriority :: Parser String
 pPriority = P.try (P.string "[#" *> P.anyChar `P.manyTill` P.char ']')
 
 pDate :: Parser Day
-pDate = do _ <- pWeekday
-           _ <- P.skipMany1 P.space
-           day <- pDay
-           _ <- P.space
-           month <- pMonth
-           _ <- P.space
-           year <- pYear
-           _ <- P.anyChar `P.manyTill` P.newline
-           return (fromGregorian year month day)
+pDate = do
+  _ <- pWeekday
+  _ <- P.skipMany1 P.space
+  day <- pDay
+  _ <- P.space
+  month <- pMonth
+  _ <- P.space
+  year <- pYear
+  _ <- P.anyChar `P.manyTill` P.newline
+  pure (fromGregorian year month day)
 
 pDay :: Parser Int
 pDay = read <$> P.many1 P.digit
