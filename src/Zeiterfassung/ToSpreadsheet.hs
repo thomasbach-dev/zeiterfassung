@@ -2,17 +2,20 @@ module Zeiterfassung.ToSpreadsheet
   ( ToSpreadsheet(..)
   ) where
 
+import qualified Data.Map  as M
 import qualified Data.Text as T
 
-import Data.Time (Day, defaultTimeLocale, formatTime)
+import Data.Time (Day, TimeOfDay (..), defaultTimeLocale, formatTime, timeToTimeOfDay, utctDayTime)
 
-import qualified Data.Map                     as M
-import           Data.Maybe                   (fromMaybe)
-import           Zeiterfassung.Config
-import           Zeiterfassung.Representation
+import Data.Maybe                   (fromMaybe)
+import Zeiterfassung.Config
+import Zeiterfassung.Representation
 
 class ToSpreadsheet a where
   toSpreadsheet :: Config -> a -> T.Text
+
+class ToSpreadsheetFormat a where
+  toSpreadsheetFormat :: a -> T.Text
 
 instance ToSpreadsheet AgendaLog where
   toSpreadsheet cfg = T.concat . map (toSpreadsheet cfg)
@@ -28,21 +31,23 @@ instance ToSpreadsheet Day where
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
     T.intercalate "," [ toSpreadsheet cfg tasks
-                      , toSpreadsheet cfg startTime
-                      , toSpreadsheet cfg endTime
+                      , formatOnlyTime startTime
+                      , formatOnlyTime endTime
                       , ""
                       , subject
                       ]
+    where
+      formatOnlyTime = toSpreadsheetFormat . timeToTimeOfDay . utctDayTime
 
 instance ToSpreadsheet [Task] where
   toSpreadsheet _ []       = ""
   toSpreadsheet cfg (t:ts) = fromMaybe (toSpreadsheet cfg ts) $ M.lookup t cfg
 
-instance ToSpreadsheet Time where
-  toSpreadsheet _ = formatTime' . roundToNextFiveMinutes
+instance ToSpreadsheetFormat TimeOfDay where
+  toSpreadsheetFormat = formatTime' . todRoundToNextFiveMinutes
 
-formatTime' :: Time -> T.Text
-formatTime' (Time h m) = T.pack (padZero h <> ":" <> padZero m)
+formatTime' :: TimeOfDay -> T.Text
+formatTime' (TimeOfDay h m _) = T.pack (padZero h <> ":" <> padZero m)
 
-padZero :: Word -> String
+padZero :: Int -> String
 padZero = reverse . take 2 . reverse . ('0':) . show

@@ -9,17 +9,21 @@ module Zeiterfassung.Parser
 import qualified Data.Text   as T
 import qualified Text.Parsec as P
 
-import Control.Monad    (void)
-import Data.Maybe       (catMaybes)
-import Data.Time        (Day, fromGregorian)
-import Text.Parsec.Text (Parser)
+import Control.Monad       (void)
+import Data.Maybe          (catMaybes)
+import Data.Time           (Day, UTCTime (..), fromGregorian)
+import Data.Time.LocalTime (TimeOfDay (..), timeOfDayToTime)
+import Text.Parsec.Text    (Parser)
 
 import Zeiterfassung.Representation
 
 pAgendaLog :: Parser AgendaLog
-pAgendaLog = do _ <- P.optional pHeader
-                P.many ((,) <$> pDate
-                            <*> (catMaybes <$> pLogLine `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)))
+pAgendaLog = do
+  _ <- P.optional pHeader
+  P.many $ do
+    day <- pDate
+    lines' <- catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
+    return (day, lines')
 
 pHeader :: Parser String
 pHeader = pWeekAgendaHeader
@@ -28,15 +32,16 @@ pHeader = pWeekAgendaHeader
     pWeekAgendaHeader = P.string "Week-agend" *> P.anyChar `P.manyTill` P.newline
     pDaysAgendaHeader = P.digit *> P.optional P.digit *> P.space *> P.string "days-agenda" *> P.anyChar `P.manyTill` P.newline
 
-pLogLine :: Parser (Maybe LogLine)
-pLogLine = do _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
-              P.try (Just <$> pClockedTask) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
+pLogLine :: Day -> Parser (Maybe LogLine)
+pLogLine day = do
+  _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
+  P.try (Just <$> pClockedTask day) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
 
-pClockedTask :: Parser LogLine
-pClockedTask =
-  do start <- pTime
+pClockedTask :: Day -> Parser LogLine
+pClockedTask day =
+  do start <- timeOnDay <$> pTime
      _ <- P.char '-' *> P.optional P.space
-     end <- pTime
+     end <- timeOnDay <$> pTime
      _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
           *> P.char '(' *> pTime *> P.char ')' *> P.spaces
      _ <- P.optional (pTaskState *> P.space)
@@ -44,6 +49,8 @@ pClockedTask =
      _ <- P.spaces
      (descr, tasks') <- pDescriptionAndTasksWithNewline
      return (LogLine start end descr tasks')
+  where
+    timeOnDay tod = UTCTime day (timeOfDayToTime tod)
 
 pDescriptionAndTasksWithNewline :: Parser (T.Text, [Task])
 pDescriptionAndTasksWithNewline = go ""
@@ -60,10 +67,11 @@ pDescriptionAndTasksWithNewline = go ""
       P.try pOnlyTasksLeft P.<|> pNoTasksInThisLine P.<|> pRecurse
 
 
-pTime :: Parser Time
-pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
-           minute <- read <$> P.count 2 P.digit
-           return (Time hour minute)
+pTime :: Parser TimeOfDay
+pTime = do
+  hour <- read <$> P.digit `P.manyTill` P.char ':'
+  minute <- read <$> P.count 2 P.digit
+  pure (TimeOfDay hour minute 0)
 
 pTaskState :: Parser String
 pTaskState = (P.try . P.choice . map P.string) ["TODO", "WAIT", "DONE", "CANC"]

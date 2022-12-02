@@ -3,7 +3,7 @@ module Zeiterfassung.ParserSpec (spec) where
 import qualified Text.Parsec as P
 
 import Data.Text  (Text)
-import Data.Time  (fromGregorian)
+import Data.Time  (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 import Zeiterfassung.Parser
@@ -16,44 +16,54 @@ spec = do
       P.parse pAgendaLog "" example1 `shouldBe` Right [(fromGregorian 2020 7 27, [])]
     it "Parses a full agenda log example" $
       let expected =
-            [(fromGregorian 2020 7 27, [ LogLine (Time 10 20) (Time 10 30) "Selbstorganisation" ["cons_q1_22"]
-                                       , LogLine (Time 11 25) (Time 12 40) "Fix failing tests in 3.2 Branch Tests" ["war"]
-                                       ])
-            ,(fromGregorian 2020 7 28, [ LogLine (Time 10 45) (Time 11 05) "[INU-2697] Soap - Light2Full" ["cons_q1_22"]])
+            [(firstExampleDay, [ LogLine (timeOnFirstExampleDay 10 20) (timeOnFirstExampleDay 10 30) "Selbstorganisation" ["cons_q1_22"]
+                               , LogLine (timeOnFirstExampleDay 11 25) (timeOnFirstExampleDay 12 40) "Fix failing tests in 3.2 Branch Tests" ["war"]
+                               ])
+            ,(sndExampleDay, [ LogLine (timeOnSndExampleDay 10 45) (timeOnSndExampleDay 11 05) "[INU-2697] Soap - Light2Full" ["cons_q1_22"]])
             ,(fromGregorian 2020 8  2, [])
             ]
+          (firstExampleDay, timeOnFirstExampleDay) = mkExampleDay 2020 7 27
+          (sndExampleDay, timeOnSndExampleDay) = mkExampleDay 2020 7 28
       in P.parse pAgendaLog "" example2 `shouldBe` Right expected
     it "Parses example 3" $
       let expected =
-            [(fromGregorian 2022 9 1, [ LogLine (Time  6 54) (Time  7 05) "Configure VPN" ["bsb_iserv"]
-                                      , LogLine (Time  8 50) (Time  9 23) "Daily Orga and Stand Up" ["bsb_iserv"]
-                                      , LogLine (Time  9 23) (Time 11 12) "Project Intro" ["bsb_iserv"]
-                                      ])]
+            [(exampleDay, [ LogLine (timeOnExampleDay  6 54) (timeOnExampleDay  7 05) "Configure VPN" ["bsb_iserv"]
+                          , LogLine (timeOnExampleDay  8 50) (timeOnExampleDay  9 23) "Daily Orga and Stand Up" ["bsb_iserv"]
+                          , LogLine (timeOnExampleDay  9 23) (timeOnExampleDay 11 12) "Project Intro" ["bsb_iserv"]
+                          ])]
+          exampleDay = fromGregorian 2022 9 1
+          timeOnExampleDay h m = UTCTime exampleDay (timeOfDayToTime $ TimeOfDay h m 0)
       in P.parse pAgendaLog "" example3 `shouldBe` Right expected
+
   describe "pDate" $ do
     it "Parses a date" $
       P.parse pDate "" "Tuesday    28 July 2020\n" `shouldBe` Right (fromGregorian 2020 7 28)
     it "Also parses the week number" $
       P.parse pDate "" "Monday     27 July 2020 W31\n" `shouldBe` Right (fromGregorian 2020 7 27)
+
+  let exampleDay = fromGregorian 2020 7 27
+      pLogLineWDay = pLogLine exampleDay
+      timeOnExampleDay h m = UTCTime exampleDay (timeOfDayToTime $ TimeOfDay h m 0)
   describe "pLogLine" $ do
     it "Parses a log line" $
-      P.parse pLogLine "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22:\n"
-        `shouldBe` (Right . Just) (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" ["cons_q1_22"])
+      P.parse pLogLineWDay "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22:\n"
+        `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 10 20) (timeOnExampleDay 10 30) "Zeiterfassung" ["cons_q1_22"])
     it "Handles tags from super-tasks correctly" $
-      P.parse pLogLine "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22::\n"
-        `shouldBe` (Right . Just) (LogLine (Time 10 20) (Time 10 30) "Zeiterfassung" ["cons_q1_22"])
+      P.parse pLogLineWDay "" "  gtd02:      10:20-10:30 Clocked:   (0:10) Zeiterfassung :cons_q1_22::\n"
+        `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 10 20) (timeOnExampleDay 10 30) "Zeiterfassung" ["cons_q1_22"])
     it "Skips the task state" $
-      P.parse pLogLine "" "  gtd02:      10:50-12:55 Clocked:   (2:05) TODO [INU-2697] Soap - Light2Full :war:\n"
-        `shouldBe` (Right . Just) (LogLine (Time 10 50) (Time 12 55) "[INU-2697] Soap - Light2Full" ["war"])
+      P.parse pLogLineWDay "" "  gtd02:      10:50-12:55 Clocked:   (2:05) TODO [INU-2697] Soap - Light2Full :war:\n"
+        `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 10 50) (timeOnExampleDay 12 55) "[INU-2697] Soap - Light2Full" ["war"])
     it "Throws away an entry with an active clock" $
-       P.parse pLogLine "" "  gtd03:      15:00...... Daily/Weekly                    :cons_q1_22:\n"
+       P.parse pLogLineWDay "" "  gtd03:      15:00...... Daily/Weekly                    :cons_q1_22:\n"
          `shouldBe` Right Nothing
     it "parses log line with double space" $
-       P.parse pLogLine "" "  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv:\n"
-         `shouldBe` (Right . Just) (LogLine (Time 6 54) (Time 7 05) "Configure VPN" ["bsb_iserv"])
+       P.parse pLogLineWDay "" "  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv:\n"
+         `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 6 54) (timeOnExampleDay 7 05) "Configure VPN" ["bsb_iserv"])
     it "parses a log line with ticket number" $
-      P.parse pLogLine "" "  UNV:        15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
-        `shouldBe` (Right . Just) (LogLine (Time 15 11) (Time 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
+      P.parse pLogLineWDay "" "  UNV:        15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
+        `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
+
   describe "pTasksFromTags" $ do
     it "parses a single task" $
       P.parse pTasksFromTags "" ":cons_q1_22:"
@@ -67,8 +77,13 @@ spec = do
 
   describe "pClockedTask" $ do
     it "Parses " $
-      P.parse pClockedTask "" "15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
-        `shouldBe` Right (LogLine (Time 15 11) (Time 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
+      P.parse (pClockedTask exampleDay) "" "15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
+        `shouldBe` Right (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
+
+mkExampleDay :: Integer -> Int -> Int -> (Day, Int -> Int -> UTCTime)
+mkExampleDay y m d = (day, \h m' -> UTCTime day (timeOfDayToTime $ TimeOfDay h m' 0))
+  where
+    day = fromGregorian y m d
 
 example1 :: Text
 example1 =
