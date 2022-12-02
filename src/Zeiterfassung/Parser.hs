@@ -9,21 +9,19 @@ module Zeiterfassung.Parser
 import qualified Data.Text   as T
 import qualified Text.Parsec as P
 
-import Control.Monad       (void)
-import Data.Maybe          (catMaybes)
-import Data.Time           (Day, UTCTime (..), fromGregorian)
-import Data.Time.LocalTime (TimeOfDay (..), timeOfDayToTime)
-import Text.Parsec.Text    (Parser)
+import Control.Monad    (void)
+import Data.Maybe       (catMaybes)
+import Data.Time        (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
+import Text.Parsec.Text (Parser)
 
 import Zeiterfassung.Representation
 
-pAgendaLog :: Parser AgendaLog
+pAgendaLog :: Parser [LogLine]
 pAgendaLog = do
   _ <- P.optional pHeader
-  P.many $ do
+  fmap concat . P.many $ do
     day <- pDate
-    lines' <- catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
-    return (day, lines')
+    catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
 
 pHeader :: Parser String
 pHeader = pWeekAgendaHeader

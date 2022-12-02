@@ -1,19 +1,16 @@
 module Zeiterfassung.Representation
-  ( AgendaLog
-   , LogLine(..)
-   , loggedTime
-   , roundLogLine
-   , Task
-   , roundToNextFiveMinutes
-   , todRoundToNextFiveMinutes
-   ) where
+  (  LogLine(..)
+  , loggedTime
+  , roundLogLine
+  , Task
+  , roundToNextFiveMinutes
+  , todRoundToNextFiveMinutes
+  ) where
 
 import qualified Data.Text as T
 
-import Data.Time           (Day, NominalDiffTime, UTCTime (..), diffUTCTime)
-import Data.Time.LocalTime (TimeOfDay (..), timeOfDayToTime, timeToTimeOfDay)
-
-type AgendaLog = [(Day, [LogLine])]
+import Data.Time
+    (NominalDiffTime, TimeOfDay (..), UTCTime (..), diffUTCTime, timeOfDayToTime, timeToTimeOfDay)
 
 data LogLine = LogLine
   { startTime :: UTCTime

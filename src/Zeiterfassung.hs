@@ -20,12 +20,12 @@ readAndTransform configFile = do
   input <- TIO.getContents
   case P.parse pAgendaLog "" input of
     Left err     -> die $ show err
-    Right parsed -> do
+    Right logEntries -> do
       -- print parsed
-      TIO.putStrLn $ toSpreadsheet cfg parsed
+      TIO.putStrLn $ toSpreadsheet cfg logEntries
       TIO.putStrLn ""
       let roundedDiff =  timeToDaysAndTimeOfDay . foldl1 (+) . map (loggedTime . roundLogLine) $ logEntries
           originalDiff = timeToDaysAndTimeOfDay . foldl1 (+) . map loggedTime $ logEntries
-          logEntries = concatMap snd parsed
+
       TIO.putStrLn $ "Time logged: " <> T.pack (show originalDiff)
       TIO.putStrLn $ "Time rounded: " <> T.pack (show roundedDiff)

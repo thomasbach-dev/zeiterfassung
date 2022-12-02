@@ -17,11 +17,8 @@ class ToSpreadsheet a where
 class ToSpreadsheetFormat a where
   toSpreadsheetFormat :: a -> T.Text
 
-instance ToSpreadsheet AgendaLog where
-  toSpreadsheet cfg = T.concat . map (toSpreadsheet cfg)
-
-instance ToSpreadsheet (Day, [LogLine]) where
-  toSpreadsheet cfg (_, logs) = T.unlines $ map (toSpreadsheet cfg) logs
+instance ToSpreadsheet [LogLine] where
+  toSpreadsheet cfg logs = T.unlines $ map (toSpreadsheet cfg) logs
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =

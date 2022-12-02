@@ -3,7 +3,7 @@ module Zeiterfassung.ParserSpec (spec) where
 import qualified Text.Parsec as P
 
 import Data.Text  (Text)
-import Data.Time  (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
+import Data.Time  (TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
 import Zeiterfassung.Parser
@@ -13,26 +13,23 @@ spec :: Spec
 spec = do
   describe "pAgendaLog" $ do
     it "Parses an empty agenda log" $
-      P.parse pAgendaLog "" example1 `shouldBe` Right [(fromGregorian 2020 7 27, [])]
+      P.parse pAgendaLog "" example1 `shouldBe` Right []
     it "Parses a full agenda log example" $
       let expected =
-            [(firstExampleDay, [ LogLine (timeOnFirstExampleDay 10 20) (timeOnFirstExampleDay 10 30) "Selbstorganisation" ["cons_q1_22"]
-                               , LogLine (timeOnFirstExampleDay 11 25) (timeOnFirstExampleDay 12 40) "Fix failing tests in 3.2 Branch Tests" ["war"]
-                               ])
-            ,(sndExampleDay, [ LogLine (timeOnSndExampleDay 10 45) (timeOnSndExampleDay 11 05) "[INU-2697] Soap - Light2Full" ["cons_q1_22"]])
-            ,(fromGregorian 2020 8  2, [])
+            [ LogLine (timeOnFirstExampleDay 10 20) (timeOnFirstExampleDay 10 30) "Selbstorganisation" ["cons_q1_22"]
+            , LogLine (timeOnFirstExampleDay 11 25) (timeOnFirstExampleDay 12 40) "Fix failing tests in 3.2 Branch Tests" ["war"]
+            , LogLine (timeOnSndExampleDay 10 45) (timeOnSndExampleDay 11 05) "[INU-2697] Soap - Light2Full" ["cons_q1_22"]
             ]
-          (firstExampleDay, timeOnFirstExampleDay) = mkExampleDay 2020 7 27
-          (sndExampleDay, timeOnSndExampleDay) = mkExampleDay 2020 7 28
+          timeOnFirstExampleDay = mkExampleDay 2020 7 27
+          timeOnSndExampleDay = mkExampleDay 2020 7 28
       in P.parse pAgendaLog "" example2 `shouldBe` Right expected
     it "Parses example 3" $
       let expected =
-            [(exampleDay, [ LogLine (timeOnExampleDay  6 54) (timeOnExampleDay  7 05) "Configure VPN" ["bsb_iserv"]
-                          , LogLine (timeOnExampleDay  8 50) (timeOnExampleDay  9 23) "Daily Orga and Stand Up" ["bsb_iserv"]
-                          , LogLine (timeOnExampleDay  9 23) (timeOnExampleDay 11 12) "Project Intro" ["bsb_iserv"]
-                          ])]
-          exampleDay = fromGregorian 2022 9 1
-          timeOnExampleDay h m = UTCTime exampleDay (timeOfDayToTime $ TimeOfDay h m 0)
+            [ LogLine (timeOnExampleDay  6 54) (timeOnExampleDay  7 05) "Configure VPN" ["bsb_iserv"]
+            , LogLine (timeOnExampleDay  8 50) (timeOnExampleDay  9 23) "Daily Orga and Stand Up" ["bsb_iserv"]
+            , LogLine (timeOnExampleDay  9 23) (timeOnExampleDay 11 12) "Project Intro" ["bsb_iserv"]
+            ]
+          timeOnExampleDay = mkExampleDay 2022 9 1
       in P.parse pAgendaLog "" example3 `shouldBe` Right expected
 
   describe "pDate" $ do
@@ -80,8 +77,8 @@ spec = do
       P.parse (pClockedTask exampleDay) "" "15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
         `shouldBe` Right (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
 
-mkExampleDay :: Integer -> Int -> Int -> (Day, Int -> Int -> UTCTime)
-mkExampleDay y m d = (day, \h m' -> UTCTime day (timeOfDayToTime $ TimeOfDay h m' 0))
+mkExampleDay :: Integer -> Int -> Int -> (Int -> Int -> UTCTime)
+mkExampleDay y m d = (\h m' -> UTCTime day (timeOfDayToTime $ TimeOfDay h m' 0))
   where
     day = fromGregorian y m d
 
