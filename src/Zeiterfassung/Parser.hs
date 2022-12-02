@@ -1,13 +1,15 @@
 module Zeiterfassung.Parser
   ( pAgendaLog
   , pLogLine
+  , pClockedTask
   , pDate
-  , pTaskFromTags
+  , pTasksFromTags
   ) where
 
 import qualified Data.Text   as T
 import qualified Text.Parsec as P
 
+import Control.Monad    (void)
 import Data.Maybe       (catMaybes)
 import Data.Time        (Day, fromGregorian)
 import Text.Parsec.Text (Parser)
@@ -17,7 +19,7 @@ import Zeiterfassung.Representation
 pAgendaLog :: Parser AgendaLog
 pAgendaLog = do _ <- P.optional pHeader
                 P.many ((,) <$> pDate
-                            <*> (catMaybes <$> pLogLine `P.manyTill` ((() <$ P.lookAhead pDate) P.<|> P.eof)))
+                            <*> (catMaybes <$> pLogLine `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)))
 
 pHeader :: Parser String
 pHeader = pWeekAgendaHeader
@@ -38,11 +40,25 @@ pClockedTask =
      _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
           *> P.char '(' *> pTime *> P.char ')' *> P.spaces
      _ <- P.optional (pTaskState *> P.space)
-     _ <- P.optional (pPriority *> P.space)
-     subj <- T.strip . T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
-     task' <- pTaskFromTags
-     _ <- P.newline
-     return (LogLine start end subj task')
+     _ <- P.optional (pPriority)
+     _ <- P.spaces
+     (descr, tasks') <- pDescriptionAndTasksWithNewline
+     return (LogLine start end descr tasks')
+
+pDescriptionAndTasksWithNewline :: Parser (T.Text, [Task])
+pDescriptionAndTasksWithNewline = go ""
+  where
+    go descr = do
+      descr' <- T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
+      let combined = descr <> descr'
+          cleaned = T.stripEnd combined
+          pOnlyTasksLeft = (cleaned,) <$> pTasksFromTags <* (void P.newline P.<|> P.eof)
+          pNoTasksInThisLine = const (cleaned, []) <$> (void P.newline P.<|> P.eof)
+          pRecurse = do
+            _ <- P.char ':'
+            go (combined <> ":")
+      P.try pOnlyTasksLeft P.<|> pNoTasksInThisLine P.<|> pRecurse
+
 
 pTime :: Parser Time
 pTime = do hour <- read <$> P.digit `P.manyTill` P.char ':'
@@ -92,8 +108,11 @@ pWeekday = P.choice $
   map (P.try . P.string) [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
                          , "Saturday", "Sunday"]
 
-pTaskFromTags :: Parser Task
-pTaskFromTags = T.pack <$> (pColon *> P.anyChar `P.manyTill` pColon) <* P.optional pColon
+pTasksFromTags :: Parser [Task]
+pTasksFromTags = P.many (P.try (pColon *> pTask)) <* P.many1 pColon
+
+pTask :: Parser Task
+pTask = T.pack <$> P.many1 (P.digit P.<|> P.lower P.<|> P.char '_')
 
 pColon :: Parser Char
 pColon = P.char ':'

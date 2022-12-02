@@ -19,7 +19,7 @@ data LogLine = LogLine
   { startTime :: Time
   , endTime   :: Time
   , subject   :: T.Text
-  , task      :: Task
+  , tasks     :: [Task]
   } deriving (Eq, Show)
 
 type Task = T.Text

@@ -27,15 +27,16 @@ instance ToSpreadsheet Day where
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
-    T.intercalate "," [ toSpreadsheet cfg task
+    T.intercalate "," [ toSpreadsheet cfg tasks
                       , toSpreadsheet cfg startTime
                       , toSpreadsheet cfg endTime
                       , ""
                       , subject
                       ]
 
-instance ToSpreadsheet Task where
-  toSpreadsheet cfg task = fromMaybe "" $ M.lookup task cfg
+instance ToSpreadsheet [Task] where
+  toSpreadsheet _ []       = ""
+  toSpreadsheet cfg (t:ts) = fromMaybe (toSpreadsheet cfg ts) $ M.lookup t cfg
 
 instance ToSpreadsheet Time where
   toSpreadsheet _ = formatTime' . roundToNextFiveMinutes

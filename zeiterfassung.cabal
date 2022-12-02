@@ -16,6 +16,7 @@ common common-options
   default-extensions:  FlexibleInstances
                      , OverloadedStrings
                      , RecordWildCards
+                     , TupleSections
   ghc-options:         -Wall
                        -Wcompat
                        -Wincomplete-record-updates
