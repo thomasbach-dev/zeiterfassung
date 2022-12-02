@@ -5,7 +5,7 @@ module Zeiterfassung.ToSpreadsheet
 import qualified Data.Map  as M
 import qualified Data.Text as T
 
-import Data.Time (Day, TimeOfDay (..), defaultTimeLocale, formatTime, timeToTimeOfDay, utctDayTime)
+import Data.Time (Day, TimeOfDay (..), UTCTime (..), defaultTimeLocale, formatTime, timeToTimeOfDay)
 
 import Data.Maybe                   (fromMaybe)
 import Zeiterfassung.Config
@@ -21,16 +21,12 @@ instance ToSpreadsheet AgendaLog where
   toSpreadsheet cfg = T.concat . map (toSpreadsheet cfg)
 
 instance ToSpreadsheet (Day, [LogLine]) where
-  toSpreadsheet cfg (day, logs) = T.unlines $ map (prefixDay . toSpreadsheet cfg) logs
-   where
-     prefixDay l = toSpreadsheet cfg day <> "," <> l
-
-instance ToSpreadsheet Day where
-  toSpreadsheet _ = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
+  toSpreadsheet cfg (_, logs) = T.unlines $ map (toSpreadsheet cfg) logs
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
-    T.intercalate "," [ toSpreadsheet cfg tasks
+    T.intercalate "," [ toSpreadsheetFormat $ utctDay startTime
+                      , toSpreadsheet cfg tasks
                       , formatOnlyTime startTime
                       , formatOnlyTime endTime
                       , ""
@@ -42,6 +38,9 @@ instance ToSpreadsheet LogLine where
 instance ToSpreadsheet [Task] where
   toSpreadsheet _ []       = ""
   toSpreadsheet cfg (t:ts) = fromMaybe (toSpreadsheet cfg ts) $ M.lookup t cfg
+
+instance ToSpreadsheetFormat Day where
+  toSpreadsheetFormat = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
 instance ToSpreadsheetFormat TimeOfDay where
   toSpreadsheetFormat = formatTime' . todRoundToNextFiveMinutes
