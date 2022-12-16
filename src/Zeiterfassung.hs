@@ -24,8 +24,8 @@ readAndTransform configFile = do
       -- print parsed
       TIO.putStrLn $ toSpreadsheet cfg logEntries
       TIO.putStrLn ""
-      let roundedDiff =  timeToDaysAndTimeOfDay . foldl1 (+) . map (loggedTime . roundLogLine) $ logEntries
-          originalDiff = timeToDaysAndTimeOfDay . foldl1 (+) . map loggedTime $ logEntries
+      let roundedDiff =  timeToDaysAndTimeOfDay . sum . map (loggedTime . roundLogLine) $ logEntries
+          originalDiff = timeToDaysAndTimeOfDay . sum . map loggedTime $ logEntries
 
       TIO.putStrLn $ "Time logged: " <> T.pack (show originalDiff)
       TIO.putStrLn $ "Time rounded: " <> T.pack (show roundedDiff)
