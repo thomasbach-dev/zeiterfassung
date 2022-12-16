@@ -1,6 +1,5 @@
 module Main where
 
-import Data.List          (intercalate)
 import System.Environment (getArgs, lookupEnv)
 import System.Exit        (die)
 
@@ -13,7 +12,7 @@ main = do
   cfgFile <- case (progArgs, envVar) of
                ([cfgFile], _)    -> pure cfgFile
                (_, Just cfgFile) -> pure cfgFile
-               _                 -> die . intercalate " " $ helpText
+               _                 -> die . unwords $ helpText
   readAndTransform cfgFile
   where
     helpText = [ "Please provide either exactlay one argument with the path to the configuration file"
