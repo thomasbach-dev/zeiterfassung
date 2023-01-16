@@ -1,2 +1,2 @@
 packages: *.cabal
-with-compiler: ghc-9.0.2
+with-compiler: ghc-9.4.2
