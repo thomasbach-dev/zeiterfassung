@@ -55,7 +55,7 @@ spec = do
        P.parse pLogLineWDay "" "  gtd03:      15:00...... Daily/Weekly                    :cons_q1_22:\n"
          `shouldBe` Right Nothing
     it "parses log line with double space" $
-       P.parse pLogLineWDay "" "  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv:\n"
+       P.parse pLogLineWDay "" "  UNV:         6:54-7:05  Clocked:   (0:11) Configure VPN                    :bsb_iserv::\n"
          `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 6 54) (timeOnExampleDay 7 05) "Configure VPN" ["bsb_iserv"])
     it "parses a log line with ticket number" $
       P.parse pLogLineWDay "" "  UNV:        15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
