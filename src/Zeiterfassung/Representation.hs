@@ -5,6 +5,9 @@ module Zeiterfassung.Representation
   , Task
   , roundToNextFiveMinutes
   , todRoundToNextFiveMinutes
+  , roundToNextQuarterHours
+  , todRoundToNextQuarterHours
+  , roundToNextNMinutes
   ) where
 
 import qualified Data.Text as T
@@ -25,23 +28,39 @@ loggedTime :: LogLine -> NominalDiffTime
 loggedTime LogLine{..} = diffUTCTime endTime startTime
 
 roundLogLine :: LogLine -> LogLine
-roundLogLine l = l { startTime = roundToNextFiveMinutes (startTime l)
-                   , endTime = roundToNextFiveMinutes (endTime l)
+roundLogLine l = l { startTime = rounding (startTime l)
+                   , endTime = rounding (endTime l)
                    }
+  where
+    rounding = roundToNextFiveMinutes
+
+roundToNextQuarterHours :: UTCTime -> UTCTime
+roundToNextQuarterHours = roundToNextNMinutes 15
+
+todRoundToNextQuarterHours :: TimeOfDay -> TimeOfDay
+todRoundToNextQuarterHours = todRoundToNextNMinutes 15
 
 roundToNextFiveMinutes :: UTCTime -> UTCTime
 roundToNextFiveMinutes (UTCTime d t) = (UTCTime d t')
   where
     t' = timeOfDayToTime . todRoundToNextFiveMinutes . timeToTimeOfDay $ t
 
-
 todRoundToNextFiveMinutes :: TimeOfDay -> TimeOfDay
-todRoundToNextFiveMinutes (TimeOfDay h m _) = TimeOfDay h' m'' 0
+todRoundToNextFiveMinutes = todRoundToNextNMinutes 5
+
+roundToNextNMinutes :: Int -> UTCTime -> UTCTime
+roundToNextNMinutes n (UTCTime d t) = (UTCTime d t')
   where
-    remainer = m `mod` 5
-    m' = if remainer < 3
-            then m - remainer
-            else m + (5 - remainer)
+    t' = timeOfDayToTime . todRoundToNextNMinutes n . timeToTimeOfDay $ t
+
+todRoundToNextNMinutes :: Int -> TimeOfDay -> TimeOfDay
+todRoundToNextNMinutes n (TimeOfDay h m _) = TimeOfDay h' m'' 0
+  where
+    (quotient, remainder) = m `divMod` n
+    fact = if remainder <= (n `div` 2)
+             then quotient
+             else quotient + 1
+    m' = fact * n
     (h', m'') = case m' of
                   60 -> (h + 1, 0)
                   _  -> (h, m')

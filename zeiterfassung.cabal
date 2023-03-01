@@ -47,8 +47,10 @@ test-suite zeiterfassung-tests
   hs-source-dirs:      tests
   main-is:             Main.hs
   build-depends:       zeiterfassung
+                     , QuickCheck
                      , hspec
                      , parsec
+                     , quickcheck-instances
                      , text
                      , time
   ghc-options:         -Wno-missing-home-modules
