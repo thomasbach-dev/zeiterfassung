@@ -40,7 +40,7 @@ instance ToSpreadsheetFormat Day where
   toSpreadsheetFormat = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
 instance ToSpreadsheetFormat TimeOfDay where
-  toSpreadsheetFormat = formatTime' . todRoundToNextFiveMinutes
+  toSpreadsheetFormat = formatTime' . defaultRoundingTOD
 
 formatTime' :: TimeOfDay -> T.Text
 formatTime' (TimeOfDay h m _) = T.pack (padZero h <> ":" <> padZero m)

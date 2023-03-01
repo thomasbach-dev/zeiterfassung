@@ -1,13 +1,13 @@
 module Zeiterfassung.Representation
-  (  LogLine(..)
+  ( LogLine(..)
   , loggedTime
   , roundLogLine
   , Task
-  , roundToNextFiveMinutes
+  , defaultRoundingTOD
+  , defaultRoundingUTCT
+  , todRoundToNextNMinutes
   , todRoundToNextFiveMinutes
-  , roundToNextQuarterHours
   , todRoundToNextQuarterHours
-  , roundToNextNMinutes
   ) where
 
 import qualified Data.Text as T
@@ -28,30 +28,23 @@ loggedTime :: LogLine -> NominalDiffTime
 loggedTime LogLine{..} = diffUTCTime endTime startTime
 
 roundLogLine :: LogLine -> LogLine
-roundLogLine l = l { startTime = rounding (startTime l)
-                   , endTime = rounding (endTime l)
+roundLogLine l = l { startTime = defaultRoundingUTCT (startTime l)
+                   , endTime = defaultRoundingUTCT (endTime l)
                    }
-  where
-    rounding = roundToNextFiveMinutes
 
-roundToNextQuarterHours :: UTCTime -> UTCTime
-roundToNextQuarterHours = roundToNextNMinutes 15
+defaultRoundingTOD :: TimeOfDay -> TimeOfDay
+defaultRoundingTOD = todRoundToNextFiveMinutes
+
+defaultRoundingUTCT :: UTCTime -> UTCTime
+defaultRoundingUTCT (UTCTime d t) = (UTCTime d t')
+  where
+    t' = timeOfDayToTime . defaultRoundingTOD . timeToTimeOfDay $ t
 
 todRoundToNextQuarterHours :: TimeOfDay -> TimeOfDay
 todRoundToNextQuarterHours = todRoundToNextNMinutes 15
 
-roundToNextFiveMinutes :: UTCTime -> UTCTime
-roundToNextFiveMinutes (UTCTime d t) = (UTCTime d t')
-  where
-    t' = timeOfDayToTime . todRoundToNextFiveMinutes . timeToTimeOfDay $ t
-
 todRoundToNextFiveMinutes :: TimeOfDay -> TimeOfDay
 todRoundToNextFiveMinutes = todRoundToNextNMinutes 5
-
-roundToNextNMinutes :: Int -> UTCTime -> UTCTime
-roundToNextNMinutes n (UTCTime d t) = (UTCTime d t')
-  where
-    t' = timeOfDayToTime . todRoundToNextNMinutes n . timeToTimeOfDay $ t
 
 todRoundToNextNMinutes :: Int -> TimeOfDay -> TimeOfDay
 todRoundToNextNMinutes n (TimeOfDay h m _) = TimeOfDay h' m'' 0

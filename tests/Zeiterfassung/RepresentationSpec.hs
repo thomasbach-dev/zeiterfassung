@@ -1,6 +1,6 @@
 module Zeiterfassung.RepresentationSpec (spec) where
 
-import Data.Time                 (TimeOfDay (..), UTCTime (..))
+import Data.Time                 (TimeOfDay (..))
 import Test.Hspec                (Spec, describe, it, shouldBe)
 import Test.Hspec.QuickCheck     (prop)
 import Test.QuickCheck           ((==>))
@@ -11,9 +11,9 @@ import Zeiterfassung.Representation
 spec :: Spec
 spec = do
   describe "todRoundToNextNMinutes" $ do
-    prop "can be divided by n" $ \n t -> 0 < n && n < 60 ==> do
-      let (UTCTime _ difftime) = roundToNextNMinutes n t
-      (((fromEnum difftime) `mod` 60) `mod` n) `shouldBe` 0
+    prop "result can be divided by n" $ \n t -> 0 < n && n < 60 ==> do
+      let (TimeOfDay _ m _) = todRoundToNextNMinutes n t
+      (m `mod` n) `shouldBe` 0
 
   describe "todRoundToNextFiveMinutes" $ do
     it "Returns identity on 0s, 5s and 10s" $
