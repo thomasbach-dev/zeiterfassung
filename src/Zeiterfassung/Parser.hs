@@ -115,7 +115,7 @@ pWeekday = P.choice $
                          , "Saturday", "Sunday"]
 
 pTasksFromTags :: Parser [Task]
-pTasksFromTags = P.many (P.try (pColon *> pTask)) <* P.many1 pColon
+pTasksFromTags = P.many (P.try (P.many1 pColon *> pTask)) <* P.many1 pColon
 
 pTask :: Parser Task
 pTask = T.pack <$> P.many1 (P.digit P.<|> P.lower P.<|> P.char '_')

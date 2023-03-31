@@ -71,6 +71,9 @@ spec = do
     it "parses a task ended with two colons" $
       P.parse pTasksFromTags "" ":foo::"
         `shouldBe` Right ["foo"]
+    it "parses a double colon in between" $
+      P.parse pTasksFromTags "" ":foo::bar:"
+        `shouldBe` Right ["foo", "bar"]
 
   describe "pClockedTask" $ do
     it "Parses " $
