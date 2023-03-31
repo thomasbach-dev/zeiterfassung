@@ -33,7 +33,7 @@ roundLogLine l = l { startTime = defaultRoundingUTCT (startTime l)
                    }
 
 defaultRoundingTOD :: TimeOfDay -> TimeOfDay
-defaultRoundingTOD = todRoundToNextFiveMinutes
+defaultRoundingTOD = todRoundToNextQuarterHours
 
 defaultRoundingUTCT :: UTCTime -> UTCTime
 defaultRoundingUTCT (UTCTime d t) = (UTCTime d t')
