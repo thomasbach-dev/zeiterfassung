@@ -1,6 +1,6 @@
 cabal-version:       3.0
 
-name:                zeiterfassung
+name:                unv-zeiterfassung
 version:             0.1.0.0
 author:              Thomas Bach
 maintainer:          info@thomasbach.dev
@@ -39,14 +39,14 @@ library
 executable zeiterfassung
   import:              common-options
   main-is:             Main.hs
-  build-depends:       zeiterfassung
+  build-depends:       unv-zeiterfassung
 
 test-suite zeiterfassung-tests
   import:              common-options
   type:                exitcode-stdio-1.0
   hs-source-dirs:      tests
   main-is:             Main.hs
-  build-depends:       zeiterfassung
+  build-depends:       unv-zeiterfassung
                      , QuickCheck
                      , hspec
                      , parsec
