@@ -2,6 +2,7 @@ module Zeiterfassung.Representation
   ( LogLine(..)
   , loggedTime
   , roundLogLine
+  , filterZeroClocked
   , Task
   , defaultRoundingTOD
   , defaultRoundingUTCT
@@ -23,6 +24,10 @@ data LogLine = LogLine
   } deriving (Eq, Show)
 
 type Task = T.Text
+
+-- | Discard all 'LogLine's which have the same start and end time.
+filterZeroClocked :: [LogLine] -> [LogLine]
+filterZeroClocked = filter (\LogLine{..} -> startTime /= endTime)
 
 loggedTime :: LogLine -> NominalDiffTime
 loggedTime LogLine{..} = diffUTCTime endTime startTime

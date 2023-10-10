@@ -18,12 +18,12 @@ class ToSpreadsheetFormat a where
   toSpreadsheetFormat :: a -> T.Text
 
 instance ToSpreadsheet [LogLine] where
-  toSpreadsheet cfg logs = T.unlines $ map (toSpreadsheet cfg) logs
+  toSpreadsheet cfg = T.unlines . map (toSpreadsheet cfg)
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
     T.intercalate "," [ toSpreadsheetFormat $ utctDay startTime
-                      , toSpreadsheet cfg tasks
+                      , "\"" <> toSpreadsheet cfg tasks <> "\""
                       , formatOnlyTime startTime
                       , formatOnlyTime endTime
                       , ""
@@ -33,14 +33,16 @@ instance ToSpreadsheet LogLine where
       formatOnlyTime = toSpreadsheetFormat . timeToTimeOfDay . utctDayTime
 
 instance ToSpreadsheet [Task] where
-  toSpreadsheet _ []       = ""
-  toSpreadsheet cfg (t:ts) = fromMaybe (toSpreadsheet cfg ts) $ M.lookup t cfg
+  toSpreadsheet cfg tasks = go tasks ""
+    where
+      go [] prev     = prev
+      go (t:ts) prev = go ts $ fromMaybe prev (M.lookup t cfg)
 
 instance ToSpreadsheetFormat Day where
   toSpreadsheetFormat = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
 instance ToSpreadsheetFormat TimeOfDay where
-  toSpreadsheetFormat = formatTime' . defaultRoundingTOD
+  toSpreadsheetFormat = formatTime'
 
 formatTime' :: TimeOfDay -> T.Text
 formatTime' (TimeOfDay h m _) = T.pack (padZero h <> ":" <> padZero m)

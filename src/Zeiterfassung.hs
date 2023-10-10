@@ -24,11 +24,12 @@ readAndTransform configFile = do
     Left err     -> die $ show err
     Right logEntries -> do
       -- print parsed
-      TIO.putStrLn $ toSpreadsheet cfg logEntries
-      TIO.putStrLn ""
-      let roundedDiff =  timeToDaysAndTimeOfDay . sum . map (loggedTime . roundLogLine) $ logEntries
+      let roundedDiff =  timeToDaysAndTimeOfDay . sum . map loggedTime $ roundedLines
           originalDiff = timeToDaysAndTimeOfDay . sum . map loggedTime $ logEntries
+          roundedLines = filterZeroClocked . map roundLogLine $ logEntries
 
+      TIO.putStrLn $ toSpreadsheet cfg $  roundedLines
+      TIO.putStrLn ""
       TIO.putStrLn $ "Time logged: " <> T.pack (show originalDiff)
       TIO.putStrLn $ "Time rounded: " <> T.pack (show roundedDiff)
 
