@@ -1,56 +1,68 @@
-cabal-version:       3.0
-
-name:                unv-zeiterfassung
-version:             0.1.0.0
-author:              Thomas Bach
-maintainer:          info@thomasbach.dev
+cabal-version: 3.0
+name:          unv-zeiterfassung
+version:       0.1.0.0
+author:        Thomas Bach
+maintainer:    info@thomasbach.dev
 
 common common-options
-  build-depends:       base
-  default-language:    Haskell2010
-  default-extensions:  FlexibleInstances
-                     , OverloadedStrings
-                     , RecordWildCards
-                     , TupleSections
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Wcpp-undef
-                       -Widentities
-                       -Wincomplete-record-updates
-                       -Wincomplete-uni-patterns
-                       -Wpartial-fields
-                       -Wredundant-constraints
-                       -Wunused-packages
+  build-depends:      base
+  default-language:   Haskell2010
+  default-extensions:
+    FlexibleInstances
+    OverloadedStrings
+    RecordWildCards
+    TupleSections
+
+  ghc-options:
+    -Wall -Wcompat -Wcpp-undef -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+    -Wunused-packages
 
 library
-  import:              common-options
-  exposed-modules:     Zeiterfassung
-                     , Zeiterfassung.Config
-                     , Zeiterfassung.Parser
-                     , Zeiterfassung.Representation
-                     , Zeiterfassung.ToSpreadsheet
-  build-depends:       aeson
-                     , containers
-                     , parsec
-                     , text
-                     , time
-  hs-source-dirs:      src
+  import:          common-options
+  exposed-modules:
+    Zeiterfassung
+    Zeiterfassung.CLI
+    Zeiterfassung.Config
+    Zeiterfassung.Parser
+    Zeiterfassung.Representation
+    Zeiterfassung.ToSpreadsheet
+
+  build-depends:
+    , aeson
+    , containers
+    , optparse-applicative
+    , parsec
+    , text
+    , time
+
+  hs-source-dirs:  src
 
 executable zeiterfassung
-  import:              common-options
-  main-is:             Main.hs
-  build-depends:       unv-zeiterfassung
+  import:        common-options
+  main-is:       Main.hs
+  build-depends: unv-zeiterfassung
+
+executable tbd-time-tracking
+  import: common-options
+  main-is: exec/tbd-time-tracking.hs
+  build-depends: unv-zeiterfassung
+               , optparse-applicative
+  
+
 
 test-suite zeiterfassung-tests
-  import:              common-options
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      tests
-  main-is:             Main.hs
-  build-depends:       unv-zeiterfassung
-                     , QuickCheck
-                     , hspec
-                     , parsec
-                     , quickcheck-instances
-                     , text
-                     , time
-  ghc-options:         -Wno-missing-home-modules
+  import:         common-options
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: tests
+  main-is:        Main.hs
+  build-depends:
+    , hspec
+    , parsec
+    , QuickCheck
+    , quickcheck-instances
+    , text
+    , time
+    , unv-zeiterfassung
+
+  ghc-options:    -Wno-missing-home-modules

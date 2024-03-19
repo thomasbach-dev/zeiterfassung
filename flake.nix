@@ -40,7 +40,11 @@
               unv-zeiterfassung
             ];
           withHoogle = false;
-          buildInputs = with haskellPackages; [ cabal-install ormolu ];
+          buildInputs = with haskellPackages; [
+            cabal-fmt
+            cabal-install
+            ormolu
+          ];
           # Change the prompt to show that you are in a devShell
           shellHook = "export PS1='\\e[1;34mdev > \\e[0m'";
         });
