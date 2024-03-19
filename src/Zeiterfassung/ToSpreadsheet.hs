@@ -1,15 +1,15 @@
 module Zeiterfassung.ToSpreadsheet
-  ( ToSpreadsheet(..)
-  ) where
+  ( ToSpreadsheet (..),
+  )
+where
 
-import qualified Data.Map  as M
-import qualified Data.Text as T
-
-import Data.Time (Day, TimeOfDay (..), UTCTime (..), defaultTimeLocale, formatTime, timeToTimeOfDay)
-
-import Data.Maybe                   (fromMaybe)
-import Zeiterfassung.Config
-import Zeiterfassung.Representation
+import qualified Data.Map                     as M
+import           Data.Maybe                   (fromMaybe)
+import qualified Data.Text                    as T
+import           Data.Time
+    (Day, TimeOfDay (..), UTCTime (..), defaultTimeLocale, formatTime, timeToTimeOfDay)
+import           Zeiterfassung.Config
+import           Zeiterfassung.Representation
 
 class ToSpreadsheet a where
   toSpreadsheet :: Config -> a -> T.Text
@@ -22,24 +22,26 @@ instance ToSpreadsheet [LogLine] where
 
 instance ToSpreadsheet LogLine where
   toSpreadsheet cfg LogLine {..} =
-    T.intercalate "," [ toSpreadsheetFormat $ utctDay startTime
-                      , "\"" <> toSpreadsheet cfg tasks <> "\""
-                      , formatOnlyTime startTime
-                      , formatOnlyTime endTime
-                      , ""
-                      , subject
-                      ]
+    T.intercalate
+      ","
+      [ toSpreadsheetFormat $ utctDay startTime,
+        "\"" <> toSpreadsheet cfg tasks <> "\"",
+        formatOnlyTime startTime,
+        formatOnlyTime endTime,
+        "",
+        subject
+      ]
     where
       formatOnlyTime = toSpreadsheetFormat . timeToTimeOfDay . utctDayTime
 
 instance ToSpreadsheet [Task] where
   toSpreadsheet cfg tasks = go tasks ""
     where
-      go [] prev     = prev
-      go (t:ts) prev = go ts $ fromMaybe prev (M.lookup t cfg)
+      go [] prev       = prev
+      go (t : ts) prev = go ts $ fromMaybe prev (M.lookup t cfg)
 
 instance ToSpreadsheetFormat Day where
-  toSpreadsheetFormat = T.pack . formatTime defaultTimeLocale "%Y-%m-%d"
+  toSpreadsheetFormat = T.pack . formatTime defaultTimeLocale "%d.%m.%y"
 
 instance ToSpreadsheetFormat TimeOfDay where
   toSpreadsheetFormat = formatTime'
@@ -48,4 +50,4 @@ formatTime' :: TimeOfDay -> T.Text
 formatTime' (TimeOfDay h m _) = T.pack (padZero h <> ":" <> padZero m)
 
 padZero :: Int -> String
-padZero = reverse . take 2 . reverse . ('0':) . show
+padZero = reverse . take 2 . reverse . ('0' :) . show

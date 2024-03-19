@@ -1,20 +1,20 @@
 module Zeiterfassung.Parser
-  ( pAgendaLog
-  , pLogLine
-  , pClockedTask
-  , pDate
-  , pTasksFromTags
-  ) where
+  ( pAgendaLog,
+    pLogLine,
+    pClockedTask,
+    pDate,
+    pTasksFromTags,
+  )
+where
 
-import qualified Data.Text   as T
-import qualified Text.Parsec as P
-
-import Control.Monad    (void)
-import Data.Maybe       (catMaybes)
-import Data.Time        (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
-import Text.Parsec.Text (Parser)
-
-import Zeiterfassung.Representation
+import           Control.Monad                (void)
+import           Data.Maybe                   (catMaybes)
+import qualified Data.Text                    as T
+import           Data.Time
+    (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
+import qualified Text.Parsec                  as P
+import           Text.Parsec.Text             (Parser)
+import           Zeiterfassung.Representation
 
 pAgendaLog :: Parser [LogLine]
 pAgendaLog = do
@@ -24,9 +24,10 @@ pAgendaLog = do
     catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
 
 pHeader :: Parser String
-pHeader = pWeekAgendaHeader P.<|> pDaysAgendaHeader
+pHeader = pWeekAgendaHeader P.<|> pDayAgendaHeader P.<|> pDaysAgendaHeader
   where
     pWeekAgendaHeader = P.string "Week-agend" *> P.anyChar `P.manyTill` P.newline
+    pDayAgendaHeader = P.string "Day-agenda" *> P.anyChar `P.manyTill` P.newline
     pDaysAgendaHeader = P.digit *> P.optional P.digit *> P.space *> P.string "days-agenda" *> P.anyChar `P.manyTill` P.newline
 
 pLogLine :: Day -> Parser (Maybe LogLine)
@@ -39,8 +40,15 @@ pClockedTask day = do
   start <- timeOnDay <$> pTime
   _ <- P.char '-' *> P.optional P.space
   end <- timeOnDay <$> pTime
-  _ <- P.space *> P.spaces *> P.string "Clocked:" *> P.spaces
-       *> P.char '(' *> pTime *> P.char ')' *> P.spaces
+  _ <-
+    P.space
+      *> P.spaces
+      *> P.string "Clocked:"
+      *> P.spaces
+      *> P.char '('
+      *> pTime
+      *> P.char ')'
+      *> P.spaces
   _ <- P.optional (pTaskState *> P.space)
   _ <- P.optional (pPriority)
   _ <- P.spaces
@@ -63,7 +71,6 @@ pDescriptionAndTasksWithNewline = go ""
             go (combined <> ":")
       P.try pOnlyTasksLeft P.<|> pNoTasksInThisLine P.<|> pRecurse
 
-
 pTime :: Parser TimeOfDay
 pTime = do
   hour <- read <$> P.digit `P.manyTill` P.char ':'
@@ -71,7 +78,15 @@ pTime = do
   pure (TimeOfDay hour minute 0)
 
 pTaskState :: Parser String
-pTaskState = (P.try . P.choice . map P.string) ["TODO", "WAIT", "DONE", "CANC"]
+pTaskState =
+  (P.try . P.choice)
+    [ P.string "TODO",
+      P.string "WAIT",
+      P.try $ P.string "DEFERED",
+      P.string "PIPELINE",
+      P.string "DONE",
+      P.string "CANC"
+    ]
 
 pPriority :: Parser String
 pPriority = P.try (P.string "[#" *> P.anyChar `P.manyTill` P.char ']')
@@ -92,27 +107,38 @@ pDay :: Parser Int
 pDay = read <$> P.many1 P.digit
 
 pMonth :: Parser Int
-pMonth = P.choice [  1 <$ P.try (P.string "January")
-                  ,  2 <$ P.string "February"
-                  ,  3 <$ P.try (P.string "March")
-                  ,  4 <$ P.try (P.string "April")
-                  ,  5 <$ P.string "May"
-                  ,  6 <$ P.try (P.string "June")
-                  ,  7 <$ P.string "July"
-                  ,  8 <$ P.string "August"
-                  ,  9 <$ P.string "September"
-                  , 10 <$ P.string "October"
-                  , 11 <$ P.string "November"
-                  , 12 <$ P.string "December"
-                  ]
+pMonth =
+  P.choice
+    [ 1 <$ P.try (P.string "January"),
+      2 <$ P.string "February",
+      3 <$ P.try (P.string "March"),
+      4 <$ P.try (P.string "April"),
+      5 <$ P.string "May",
+      6 <$ P.try (P.string "June"),
+      7 <$ P.string "July",
+      8 <$ P.string "August",
+      9 <$ P.string "September",
+      10 <$ P.string "October",
+      11 <$ P.string "November",
+      12 <$ P.string "December"
+    ]
 
 pYear :: Parser Integer
 pYear = read <$> P.count 4 P.digit
 
 pWeekday :: Parser String
-pWeekday = P.choice $
-  map (P.try . P.string) [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
-                         , "Saturday", "Sunday"]
+pWeekday =
+  P.choice $
+    map
+      (P.try . P.string)
+      [ "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ]
 
 pTasksFromTags :: Parser [Task]
 pTasksFromTags = P.many (P.try (P.many1 pColon *> pTask)) <* P.many1 pColon
