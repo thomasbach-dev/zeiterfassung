@@ -8,7 +8,10 @@ common common-options
   build-depends:      base
   default-language:   Haskell2010
   default-extensions:
+    DeriveGeneric
+    DuplicateRecordFields
     FlexibleInstances
+    LambdaCase
     OverloadedStrings
     RecordWildCards
     TupleSections
@@ -25,12 +28,15 @@ library
     Zeiterfassung.CLI
     Zeiterfassung.Config
     Zeiterfassung.Parser
+    Zeiterfassung.Redmine
     Zeiterfassung.Representation
     Zeiterfassung.ToSpreadsheet
 
   build-depends:
     , aeson
+    , bytestring
     , containers
+    , http-conduit
     , optparse-applicative
     , parsec
     , text
@@ -44,12 +50,11 @@ executable zeiterfassung
   build-depends: unv-zeiterfassung
 
 executable tbd-time-tracking
-  import: common-options
-  main-is: exec/tbd-time-tracking.hs
-  build-depends: unv-zeiterfassung
-               , optparse-applicative
-  
-
+  import:        common-options
+  main-is:       exec/tbd-time-tracking.hs
+  build-depends:
+    , optparse-applicative
+    , unv-zeiterfassung
 
 test-suite zeiterfassung-tests
   import:         common-options
