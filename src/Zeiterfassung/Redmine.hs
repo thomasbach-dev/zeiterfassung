@@ -20,7 +20,8 @@ import           Zeiterfassung.Representation
 data RedmineConfig = RedmineConfig
   { baseRequest :: !Request,
     apiKey      :: !String,
-    userId      :: !Int
+    userId      :: !Int,
+    projectMap  :: !ProjectMap
   }
   deriving (Show)
 
@@ -30,7 +31,9 @@ data ProjectDef = ProjectDef
   { issue_id    :: !Int,
     activity_id :: !Int
   }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
+
+instance FromJSON ProjectDef
 
 -- * Time Entries
 

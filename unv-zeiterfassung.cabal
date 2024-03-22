@@ -56,9 +56,8 @@ executable zeiterfassung
 executable tbd-time-tracking
   import:        common-options
   main-is:       exec/tbd-time-tracking.hs
-  build-depends:
-    , optparse-applicative
-    , unv-zeiterfassung
+  build-depends: unv-zeiterfassung
+  
 
 test-suite zeiterfassung-tests
   import:         common-options
