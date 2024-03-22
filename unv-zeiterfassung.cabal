@@ -49,9 +49,9 @@ library
 
   hs-source-dirs:  src
 
-executable zeiterfassung
+executable unv-zeiterfassung
   import:        common-options
-  main-is:       Main.hs
+  main-is:       exec/unv-zeiterfassung.hs
   build-depends: unv-zeiterfassung
 
 executable tbd-time-tracking
