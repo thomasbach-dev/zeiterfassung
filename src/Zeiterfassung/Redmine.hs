@@ -1,5 +1,6 @@
 module Zeiterfassung.Redmine where
 
+import           Control.Monad                (when)
 import           Data.Aeson
     (FromJSON (parseJSON), ToJSON (..), Value (Object), defaultOptions, genericToEncoding, object,
     (.:), (.=))
@@ -7,20 +8,26 @@ import           Data.Aeson.Types             (prependFailure, typeMismatch)
 import           Data.ByteString.Char8        (pack)
 import qualified Data.ByteString.Char8        as BSC
 import qualified Data.HashMap.Strict          as HM
-import           Data.Maybe                   (mapMaybe)
+import           Data.Maybe                   (catMaybes, mapMaybe)
 import qualified Data.Text                    as T
 import           Data.Time                    (Day, UTCTime (utctDay))
 import           GHC.Generics                 (Generic)
 import           Network.HTTP.Simple
-    (Request, Response, httpJSON, setRequestHeader, setRequestPath, setRequestQueryString)
+    (Request, Response, getResponseBody, getResponseStatusCode, httpJSON, httpNoBody,
+    setRequestHeader, setRequestMethod, setRequestPath, setRequestQueryString)
+import           System.Exit                  (die)
+import           System.Log.Logger            (errorM)
 import           Zeiterfassung.Representation
+
+moduleLogger :: String
+moduleLogger = "Zeiterfassung.Redmine"
 
 -- * Configuration
 
 data RedmineConfig = RedmineConfig
   { baseRequest :: !Request,
     apiKey      :: !String,
-    userId      :: !Int,
+    userId      :: !UserId,
     projectMap  :: !ProjectMap
   }
   deriving (Show)
@@ -28,8 +35,8 @@ data RedmineConfig = RedmineConfig
 type ProjectMap = HM.HashMap Task ProjectDef
 
 data ProjectDef = ProjectDef
-  { issue_id    :: !Int,
-    activity_id :: !Int
+  { issue_id    :: !IssueId,
+    activity_id :: !ActivityId
   }
   deriving (Eq, Generic, Show)
 
@@ -39,10 +46,10 @@ instance FromJSON ProjectDef
 
 -- ** Create
 
-logLineToTimeEntryCreate :: RedmineConfig -> ProjectMap -> LogLine -> IO TimeEntryCreate
-logLineToTimeEntryCreate config projectMap logline = do
-  projectDef <- case mapMaybe (`HM.lookup` projectMap) logline.tasks of
-    []      -> error $ "Cannot find project definition for " <> show logline.tasks
+logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO TimeEntryCreate
+logLineToTimeEntryCreate config logline = do
+  projectDef <- case mapMaybe (`HM.lookup` config.projectMap) logline.tasks of
+    []      -> die $ "Cannot find project definition for " <> show logline.tasks
     (x : _) -> pure x
   let issue_id = projectDef.issue_id
       activity_id = projectDef.activity_id
@@ -52,12 +59,6 @@ logLineToTimeEntryCreate config projectMap logline = do
     hours = loggedHours logline
     comments = logline.subject
     user_id = userId config
-
-newtype ActivityId = ActivityId
-  { unActivityId :: Int
-  }
-  deriving (Eq, Show)
-  deriving (FromJSON) via Int
 
 newtype WrappedTimeEntryCreate = WrappedTimeEntryCreate
   { unWrappedTimeEntryCreate :: TimeEntryCreate
@@ -69,18 +70,18 @@ instance ToJSON WrappedTimeEntryCreate where
 
 data TimeEntryCreate = TimeEntryCreate
   { -- | required The alternative is to specify the project id
-    issue_id    :: !Int,
+    issue_id    :: !IssueId,
     -- | the date the time was spent (default to the current date)
     spent_on    :: !(Maybe Day),
     -- | (required): the number of spent hours
     hours       :: !Double,
     -- | the id of the time activity. This parameter is required unless a default activity is
     -- defined in Redmine.
-    activity_id :: !Int,
+    activity_id :: !ActivityId,
     -- | short description for the entry (255 characters max)
     comments    :: !T.Text,
     -- | user id to be specified in need of posting time on behalf of another user
-    user_id     :: !Int
+    user_id     :: !UserId
   }
   deriving (Eq, Generic, Show)
 
@@ -91,10 +92,39 @@ instance ToJSON TimeEntryCreate where
 
 -- | Return a list of all time entries. This currently filters for the user id
 -- from 'RedmineConfig'.
-getTimeEntries :: RedmineConfig -> IO (Response GetTimeEntriesResponse)
-getTimeEntries cfg@RedmineConfig {..} = performRequest reqMod cfg
+getTimeEntries :: RedmineConfig -> GetTimeEntriesRequest -> IO GetTimeEntriesResponse
+getTimeEntries cfg req = do
+  res <- performRequestJSON reqMod cfg
+  when (getResponseStatusCode res /= 200) $ do
+    errorM loggerName $ "Error on getting time entries"
+    errorM loggerName $ show res
+    die "Exiting"
+  pure (getResponseBody res)
   where
-    reqMod = setRequestPath "/time_entries.json" . setRequestQueryString [("user_id", (Just . BSC.pack . show) userId)]
+    reqMod =
+      setRequestPath "/time_entries.json"
+        . setRequestQueryString
+          ( catMaybes
+              [ ("user_id",) . Just . BSC.pack . show . unUserId <$> req.user_id,
+                ("project_id",) . Just . BSC.pack . show . unProjectId <$> req.project_id,
+                ("limit",) . Just . BSC.pack . show <$> req.limit,
+                ("from",) . Just . BSC.pack . show <$> req.from,
+                ("to",) . Just . BSC.pack . show <$> req.to
+              ]
+          )
+    loggerName = moduleLogger <> ".getTimeEntries"
+
+defaultGetTimeEntriesRequest :: GetTimeEntriesRequest
+defaultGetTimeEntriesRequest = GetTimeEntriesRequest Nothing Nothing Nothing Nothing Nothing
+
+data GetTimeEntriesRequest = GetTimeEntriesRequest
+  { project_id :: Maybe ProjectId,
+    user_id    :: Maybe UserId,
+    limit      :: Maybe Int,
+    from       :: Maybe Day,
+    to         :: Maybe Day
+  }
+  deriving (Eq, Show)
 
 data GetTimeEntriesResponse = GetTimeEntriesResponse
   { limit        :: !Int,
@@ -107,7 +137,7 @@ data GetTimeEntriesResponse = GetTimeEntriesResponse
 instance FromJSON GetTimeEntriesResponse
 
 data GetTimeEntriesResponse'TimeEntry = GetTimeEntriesResponse'TimeEntry
-  { activity         :: !Activity,
+  { activity         :: !(IdWithName ActivityId),
     comments         :: !T.Text,
     created_on       :: !UTCTime,
     custom_fields    :: ![CustomFields],
@@ -115,24 +145,16 @@ data GetTimeEntriesResponse'TimeEntry = GetTimeEntriesResponse'TimeEntry
     entity_id        :: !Int,
     entity_type      :: !T.Text,
     hours            :: !Double,
-    id               :: !Int,
+    id               :: !TimeEntryId,
     issue            :: !(Maybe WrappedId),
-    project          :: !Project,
+    project          :: !(IdWithName ProjectId),
     spent_on         :: !Day,
     updated_on       :: !UTCTime,
-    user             :: !User
+    user             :: !(IdWithName UserId)
   }
   deriving (Eq, Show, Generic)
 
 instance FromJSON GetTimeEntriesResponse'TimeEntry
-
-data Activity = Activity
-  { id   :: !Int,
-    name :: !T.Text
-  }
-  deriving (Eq, Show, Generic)
-
-instance FromJSON Activity
 
 newtype WrappedId = WrappedId {unWrappedId :: Int} deriving (Eq, Show)
 
@@ -140,16 +162,29 @@ instance FromJSON WrappedId where
   parseJSON (Object v) = WrappedId <$> v .: "id"
   parseJSON invalid    = prependFailure "parsing WrappedId failed, " $ typeMismatch "Object" invalid
 
+-- ** Delete
+
+deleteTimeEntry :: RedmineConfig -> TimeEntryId -> IO ()
+deleteTimeEntry cfg id_ = do
+  res <- httpNoBody request
+  when (getResponseStatusCode res /= 200) $ do
+    errorM loggerName $ "Error while deleting time entry " <> show id_
+    errorM loggerName $ show res
+    die "Exiting"
+  where
+    request =
+      setRequestMethod "DELETE"
+        . setRequestPath ("/time_entries/" <> (BSC.pack . show) id_ <> ".json")
+        . buildRequest
+        $ cfg
+    loggerName = moduleLogger <> ".deleteTimeEntry"
+
 -- * Issues
 
 getIssue :: IssueId -> RedmineConfig -> IO (Response GetIssueResult)
 getIssue issueId =
-  performRequest
-    (setRequestPath ("/issues/" <> (BSC.pack . show . unIssueId) issueId <> ".json"))
-
-newtype IssueId = IssueId {unIssueId :: Int}
-  deriving (FromJSON) via Int
-  deriving (Eq, Show)
+  performRequestJSON
+    (setRequestPath ("/issues/" <> (BSC.pack . show) issueId <> ".json"))
 
 newtype GetIssueResult = GetIssueResult
   { issue :: GetIssueResult'Issue
@@ -159,8 +194,8 @@ newtype GetIssueResult = GetIssueResult
 instance FromJSON GetIssueResult
 
 data GetIssueResult'Issue = GetIssueResult'Issue
-  { assigned_to       :: !User,
-    author            :: !User,
+  { assigned_to       :: !(IdWithName UserId),
+    author            :: !(IdWithName UserId),
     created_on        :: !UTCTime,
     css_classes       :: !T.Text,
     custom_fields     :: ![CustomFields],
@@ -169,7 +204,7 @@ data GetIssueResult'Issue = GetIssueResult'Issue
     due_date          :: !Day,
     id                :: !IssueId,
     priority          :: !IssuePriority,
-    project           :: !Project,
+    project           :: !(IdWithName ProjectId),
     spent_hours       :: !Double,
     start_date        :: !Day,
     status            :: !IssueStatus,
@@ -208,21 +243,41 @@ instance FromJSON IssueTracker
 
 -- * Common records used in several requests
 
-data Project = Project
-  { id   :: !Int,
-    name :: !T.Text
-  }
-  deriving (Eq, Show, Generic)
-
-instance FromJSON Project
-
-data User = User
-  { id   :: !Int,
+data IdWithName a = IdWithName
+  { id   :: !a,
     name :: !T.Text
   }
   deriving (Eq, Generic, Show)
 
-instance FromJSON User
+instance (FromJSON a) => FromJSON (IdWithName a)
+
+newtype ActivityId = ActivityId
+  { unActivityId :: Int
+  }
+  deriving (Eq)
+  deriving (Read, Show, FromJSON, ToJSON) via Int
+
+newtype IssueId = IssueId
+  { unIssueId :: Int
+  }
+  deriving (Eq)
+  deriving (Read, Show, FromJSON, ToJSON) via Int
+
+newtype ProjectId = ProjectId
+  { unProjectId :: Int
+  }
+  deriving (Eq)
+  deriving (Read, Show, FromJSON, ToJSON) via Int
+
+newtype TimeEntryId = TimeEntryId
+  { unTimeEntryId :: Int
+  }
+  deriving (Eq)
+  deriving (Read, Show, FromJSON) via Int
+
+newtype UserId = UserId {unUserId :: Int}
+  deriving (Eq)
+  deriving (Read, Show, FromJSON, ToJSON) via Int
 
 data CustomFields = CustomFields
   { field_format  :: !T.Text,
@@ -237,7 +292,8 @@ instance FromJSON CustomFields
 
 -- * Utils
 
-performRequest :: (FromJSON a) => (Request -> Request) -> RedmineConfig -> IO (Response a)
-performRequest reqMod RedmineConfig {..} = httpJSON request
-  where
-    request = reqMod . setRequestHeader "X-Redmine-API-Key" [pack apiKey] $ baseRequest
+performRequestJSON :: (FromJSON a) => (Request -> Request) -> RedmineConfig -> IO (Response a)
+performRequestJSON reqMod = httpJSON . reqMod . buildRequest
+
+buildRequest :: RedmineConfig -> Request
+buildRequest RedmineConfig {..} = setRequestHeader "X-Redmine-API-Key" [pack apiKey] baseRequest
