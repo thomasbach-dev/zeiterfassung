@@ -39,6 +39,7 @@ library
     , aeson
     , bytestring
     , containers
+    , hslogger
     , http-conduit
     , optparse-applicative
     , parsec

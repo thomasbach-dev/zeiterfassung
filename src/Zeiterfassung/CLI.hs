@@ -3,36 +3,69 @@ module Zeiterfassung.CLI where
 import Data.Aeson            (eitherDecodeFileStrict)
 import Network.HTTP.Simple   (parseRequest)
 import Options.Applicative
-    (Parser, ParserInfo, argument, command, execParser, fullDesc, help, helper, info, metavar,
-    progDesc, str, subparser, (<**>))
+    (Parser, ParserInfo, argument, auto, command, execParser, fullDesc, help, helper, info, long,
+    metavar, option, progDesc, short, showDefault, str, subparser, value, (<**>))
 import System.Environment    (lookupEnv)
 import System.Exit           (die)
+import System.Log.Logger
+import Zeiterfassung.Parser
 import Zeiterfassung.Redmine
 
-data Command = ToRedmine ToRedmineArgs
+data MainArgs = MainArgs
+  { logLevel    :: Priority,
+    mainCommand :: MainCommand
+  }
+  deriving (Eq, Show)
+
+data MainCommand = ToRedmine ToRedmineArgs
   deriving (Eq, Show)
 
 cliMain :: IO ()
-cliMain =
-  execParser mainParser >>= \case
-    ToRedmine args -> toRedmineMain args
+cliMain = do
+  args <- execParser mainParser
+  updateGlobalLogger rootLoggerName (setLevel $ args.logLevel)
+  debugM "CLI.cliMain" $ "Parsed command line args: " <> show args
+  case args.mainCommand of
+    ToRedmine redmineArgs -> toRedmineMain redmineArgs
 
-mainParser :: ParserInfo Command
+mainParser :: ParserInfo MainArgs
 mainParser =
   info
-    (commandParser <**> helper)
+    (mainArgsParser <**> helper)
     ( fullDesc
         <> progDesc "Do various things around time tracking"
     )
+  where
+    mainArgsParser =
+      MainArgs
+        <$> logLevelParser
+        <*> mainCommandParser
+    logLevelParser =
+      option
+        auto
+        ( long "log-level"
+            <> help "Set the log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+            <> short 'l'
+            <> metavar "LEVEL"
+            <> showDefault
+            <> Options.Applicative.value INFO
+        )
 
-commandParser :: Parser Command
-commandParser = subparser (command "to-redmine" (info (ToRedmine <$> redmineParser <**> helper) (progDesc "Book times to redmine")))
+mainCommandParser :: Parser MainCommand
+mainCommandParser =
+  subparser
+    ( command
+        "to-redmine"
+        (info (ToRedmine <$> redmineParser <**> helper) (progDesc "Book times to redmine"))
+    )
 
 -- * Publish to Redmine
 
 toRedmineMain :: ToRedmineArgs -> IO ()
 toRedmineMain args = do
-  print args
+  cfg <- getRedmineConfiguration
+  loglines <- readAgendaFile args.agendaFile
+  mapM_ (debugM "CLI.toRedmineMain") ("Read log lines:" : map show loglines)
 
 data ToRedmineArgs = ToRedmineArgs
   { agendaFile :: String
