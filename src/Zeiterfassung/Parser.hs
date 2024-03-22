@@ -1,5 +1,6 @@
 module Zeiterfassung.Parser
-  ( pAgendaLog,
+  ( readAgendaFile,
+    pAgendaLog,
     pLogLine,
     pClockedTask,
     pDate,
@@ -10,11 +11,20 @@ where
 import           Control.Monad                (void)
 import           Data.Maybe                   (catMaybes)
 import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as TIO
 import           Data.Time
     (Day, TimeOfDay (..), UTCTime (..), fromGregorian, timeOfDayToTime)
+import           System.Exit                  (die)
 import qualified Text.Parsec                  as P
 import           Text.Parsec.Text             (Parser)
 import           Zeiterfassung.Representation
+
+readAgendaFile :: String -> IO [LogLine]
+readAgendaFile filePath = do
+  content <- TIO.readFile filePath
+  case P.parse pAgendaLog filePath content of
+    Left err         -> die $ show err
+    Right logEntries -> pure logEntries
 
 pAgendaLog :: Parser [LogLine]
 pAgendaLog = do
@@ -32,7 +42,7 @@ pHeader = pWeekAgendaHeader P.<|> pDayAgendaHeader P.<|> pDaysAgendaHeader
 
 pLogLine :: Day -> Parser (Maybe LogLine)
 pLogLine day = do
-  _ <- P.spaces *> P.anyChar `P.manyTill` P.space *> P.spaces
+  _ <- P.spaces *> P.anyChar `P.manyTill` P.char ':' *> P.spaces
   P.try (Just <$> pClockedTask day) P.<|> (Nothing <$ P.anyChar `P.manyTill` P.newline)
 
 pClockedTask :: Day -> Parser LogLine
