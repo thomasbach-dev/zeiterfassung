@@ -1,4 +1,14 @@
-module Zeiterfassung.Redmine where
+module Zeiterfassung.Redmine
+  ( RedmineConfig (..),
+    TimeEntryCreate (..),
+    logLineToTimeEntryCreate,
+    GetTimeEntriesRequest (..),
+    defaultGetTimeEntriesRequest,
+    GetTimeEntriesResponse (..),
+    getTimeEntries,
+    postTimeEntry,
+  )
+where
 
 import           Control.Monad                (when)
 import           Data.Aeson
@@ -14,7 +24,7 @@ import           Data.Time                    (Day, UTCTime (utctDay))
 import           GHC.Generics                 (Generic)
 import           Network.HTTP.Simple
     (Request, Response, getResponseBody, getResponseStatusCode, httpJSON, httpNoBody,
-    setRequestHeader, setRequestMethod, setRequestPath, setRequestQueryString)
+    setRequestBodyJSON, setRequestHeader, setRequestMethod, setRequestPath, setRequestQueryString)
 import           System.Exit                  (die)
 import           System.Log.Logger            (errorM)
 import           Zeiterfassung.Representation
@@ -60,6 +70,21 @@ logLineToTimeEntryCreate config logline = do
     comments = logline.subject
     user_id = userId config
 
+postTimeEntry :: RedmineConfig -> TimeEntryCreate -> IO Value
+postTimeEntry cfg entry = do
+  resp <- performRequestJSON reqMod cfg
+  when (getResponseStatusCode resp /= 201) $ do
+    errorM loggerName $ "Error while posting time entry " <> show entry
+    errorM loggerName $ show resp
+    die "Exiting"
+  pure (getResponseBody resp)
+  where
+    reqMod =
+      setRequestMethod "POST"
+        . setRequestPath "/time_entries.json"
+        . setRequestBodyJSON (WrappedTimeEntryCreate entry)
+    loggerName = moduleLogger <> ".postTimeEntry"
+
 newtype WrappedTimeEntryCreate = WrappedTimeEntryCreate
   { unWrappedTimeEntryCreate :: TimeEntryCreate
   }
@@ -96,7 +121,7 @@ getTimeEntries :: RedmineConfig -> GetTimeEntriesRequest -> IO GetTimeEntriesRes
 getTimeEntries cfg req = do
   res <- performRequestJSON reqMod cfg
   when (getResponseStatusCode res /= 200) $ do
-    errorM loggerName $ "Error on getting time entries"
+    errorM loggerName "Error on getting time entries"
     errorM loggerName $ show res
     die "Exiting"
   pure (getResponseBody res)

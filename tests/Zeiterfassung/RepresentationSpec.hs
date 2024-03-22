@@ -42,6 +42,14 @@ spec = do
       let example3 = LogLine timestamp1 timestamp3 "" []
           timestamp3 = ((30 * 60) `addUTCTime` timestamp1)
        in loggedHours example3 `shouldBe` 0.5
+    it "correctly ceils to the next quarter hour" $
+      let example4 = LogLine timestamp1 timestamp4 "" []
+          timestamp4 = ((10 * 60) `addUTCTime` timestamp1)
+       in loggedHours example4 `shouldBe` 0.25
+    it "correctly floors to the next quarter hour" $
+      let thisExample = LogLine timestamp1 thisTimestamp "" []
+          thisTimestamp = ((20 * 60) `addUTCTime` timestamp1)
+       in loggedHours thisExample `shouldBe` 0.25
 
 minutesToTOD :: Int -> TimeOfDay
 minutesToTOD m = TimeOfDay 0 m 0

@@ -1,15 +1,26 @@
-module Zeiterfassung.CLI where
+module Zeiterfassung.CLI
+  ( cliMain,
+    getRedmineConfiguration,
+  )
+where
 
-import Data.Aeson            (eitherDecodeFileStrict)
-import Network.HTTP.Simple   (parseRequest)
+import Control.Monad                (forM_, when)
+import Data.Aeson                   (eitherDecodeFileStrict)
+import Data.Time                    (timeToDaysAndTimeOfDay)
+import Network.HTTP.Simple          (parseRequest)
 import Options.Applicative
     (Parser, ParserInfo, argument, auto, command, execParser, fullDesc, help, helper, info, long,
-    metavar, option, progDesc, short, showDefault, str, subparser, value, (<**>))
-import System.Environment    (lookupEnv)
-import System.Exit           (die)
+    metavar, option, progDesc, short, showDefault, str, subparser, switch, value, (<**>))
+import System.Environment           (lookupEnv)
+import System.Exit                  (die)
 import System.Log.Logger
+    (Priority (INFO), debugM, infoM, rootLoggerName, setLevel, updateGlobalLogger)
 import Zeiterfassung.Parser
 import Zeiterfassung.Redmine
+import Zeiterfassung.Representation
+
+moduleLogger :: String
+moduleLogger = "Zeiterfassung.CLI"
 
 data MainArgs = MainArgs
   { logLevel    :: Priority,
@@ -65,15 +76,37 @@ toRedmineMain :: ToRedmineArgs -> IO ()
 toRedmineMain args = do
   cfg <- getRedmineConfiguration
   loglines <- readAgendaFile args.agendaFile
-  mapM_ (debugM "CLI.toRedmineMain") ("Read log lines:" : map show loglines)
+  mapM_ (debugM loggerName) $
+    "Read log lines:" : map show loglines
+  allEntries <- mapM (logLineToTimeEntryCreate cfg) loglines
+  mapM_ (debugM loggerName) $
+    "Mapped to the following time entries:" : map show allEntries
+
+  let totalSpent :: Double = sum . map (\x -> x.hours) $ entries
+      actuallySpent = sum . map loggedTime $ loglines
+      entries = filter (\x -> x.hours /= 0) allEntries
+  infoM loggerName $ "Create time entries with a total spent hours of: " <> show totalSpent
+  infoM loggerName $ "Actually spent: " <> (show . timeToDaysAndTimeOfDay) actuallySpent
+  when args.dryRun $ do
+    die "Dry run mode! Exiting"
+  forM_ entries $ \entry -> do
+    infoM loggerName $ "Creating " <> show entry
+    resp <- postTimeEntry cfg entry
+    debugM loggerName $ "Result: " <> show resp
+  where
+    loggerName = moduleLogger <> ".toRedmineMain"
 
 data ToRedmineArgs = ToRedmineArgs
-  { agendaFile :: String
+  { dryRun     :: Bool,
+    agendaFile :: String
   }
   deriving (Eq, Show)
 
 redmineParser :: Parser ToRedmineArgs
-redmineParser = ToRedmineArgs <$> argument str (metavar "FILE" <> help "The agenda file to process")
+redmineParser =
+  ToRedmineArgs
+    <$> switch (long "dry-run" <> short 'n' <> help "Do not create any time entry")
+    <*> argument str (metavar "FILE" <> help "The agenda file to process")
 
 getRedmineConfiguration :: IO RedmineConfig
 getRedmineConfiguration = do

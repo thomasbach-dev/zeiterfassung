@@ -41,7 +41,9 @@ loggedHours logLine = fromIntegral hours + minutes
   where
     totalMinutes = (/ 60) . nominalDiffTimeToSeconds . loggedTime $ logLine
     (hours :: Int, remaining) = totalMinutes `divMod'` 60
-    minutes = fromRational . toRational $ remaining / 60
+    (quarterHours :: Int, remaining') = remaining `divMod'` 15
+    minutes = (* 0.25) . fromRational . toRational $ roundedQuarterHours
+    roundedQuarterHours = if remaining' <= 6 then quarterHours else quarterHours + 1
 
 roundLogLine :: LogLine -> LogLine
 roundLogLine l =
