@@ -1,6 +1,6 @@
 module Zeiterfassung.Redmine
   ( RedmineConfig (..),
-    TimeEntryCreate (..),
+    PostTimeEntryRequest (..),
     logLineToTimeEntryCreate,
     GetTimeEntriesRequest (..),
     defaultGetTimeEntriesRequest,
@@ -13,7 +13,7 @@ where
 import           Control.Monad                (when)
 import           Data.Aeson
     (FromJSON (parseJSON), ToJSON (..), Value (Object), defaultOptions, genericToEncoding, object,
-    (.:), (.=))
+    withObject, (.:), (.=))
 import           Data.Aeson.Types             (prependFailure, typeMismatch)
 import           Data.ByteString.Char8        (pack)
 import qualified Data.ByteString.Char8        as BSC
@@ -56,44 +56,47 @@ instance FromJSON ProjectDef
 
 -- ** Create
 
-logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO TimeEntryCreate
+logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO PostTimeEntryRequest
 logLineToTimeEntryCreate config logline = do
   projectDef <- case mapMaybe (`HM.lookup` config.projectMap) logline.tasks of
     []      -> die $ "Cannot find project definition for " <> show logline.tasks
     (x : _) -> pure x
   let issue_id = projectDef.issue_id
       activity_id = projectDef.activity_id
-  pure TimeEntryCreate {..}
+  pure PostTimeEntryRequest {..}
   where
     spent_on = Just . utctDay $ startTime logline
     hours = loggedHours logline
     comments = logline.subject
     user_id = userId config
 
-postTimeEntry :: RedmineConfig -> TimeEntryCreate -> IO Value
+postTimeEntry :: RedmineConfig -> PostTimeEntryRequest -> IO TimeEntry
 postTimeEntry cfg entry = do
   resp <- performRequestJSON reqMod cfg
   when (getResponseStatusCode resp /= 201) $ do
     errorM loggerName $ "Error while posting time entry " <> show entry
     errorM loggerName $ show resp
     die "Exiting"
-  pure (getResponseBody resp)
+  pure . unWrappedTimeEntry . getResponseBody $ resp
   where
     reqMod =
       setRequestMethod "POST"
         . setRequestPath "/time_entries.json"
-        . setRequestBodyJSON (WrappedTimeEntryCreate entry)
+        . setRequestBodyJSON (WrappedTimeEntry entry)
     loggerName = moduleLogger <> ".postTimeEntry"
 
-newtype WrappedTimeEntryCreate = WrappedTimeEntryCreate
-  { unWrappedTimeEntryCreate :: TimeEntryCreate
+newtype WrappedTimeEntry a = WrappedTimeEntry
+  { unWrappedTimeEntry :: a
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
-instance ToJSON WrappedTimeEntryCreate where
-  toJSON (WrappedTimeEntryCreate entry) = object ["time_entry" .= entry]
+instance (ToJSON a) => ToJSON (WrappedTimeEntry a) where
+  toJSON (WrappedTimeEntry entry) = object ["time_entry" .= entry]
 
-data TimeEntryCreate = TimeEntryCreate
+instance (FromJSON a) => FromJSON (WrappedTimeEntry a) where
+  parseJSON = withObject "WrappedTimeEntry" $ \v -> WrappedTimeEntry <$> v .: "time_entry"
+
+data PostTimeEntryRequest = PostTimeEntryRequest
   { -- | required The alternative is to specify the project id
     issue_id    :: !IssueId,
     -- | the date the time was spent (default to the current date)
@@ -110,7 +113,7 @@ data TimeEntryCreate = TimeEntryCreate
   }
   deriving (Eq, Generic, Show)
 
-instance ToJSON TimeEntryCreate where
+instance ToJSON PostTimeEntryRequest where
   toEncoding = genericToEncoding defaultOptions
 
 -- ** Listing
@@ -154,32 +157,12 @@ data GetTimeEntriesRequest = GetTimeEntriesRequest
 data GetTimeEntriesResponse = GetTimeEntriesResponse
   { limit        :: !Int,
     offset       :: !Int,
-    time_entries :: ![GetTimeEntriesResponse'TimeEntry],
+    time_entries :: ![TimeEntry],
     total_count  :: !Int
   }
   deriving (Eq, Show, Generic)
 
 instance FromJSON GetTimeEntriesResponse
-
-data GetTimeEntriesResponse'TimeEntry = GetTimeEntriesResponse'TimeEntry
-  { activity         :: !(IdWithName ActivityId),
-    comments         :: !T.Text,
-    created_on       :: !UTCTime,
-    custom_fields    :: ![CustomFields],
-    easy_is_billable :: !Bool,
-    entity_id        :: !Int,
-    entity_type      :: !T.Text,
-    hours            :: !Double,
-    id               :: !TimeEntryId,
-    issue            :: !(Maybe WrappedId),
-    project          :: !(IdWithName ProjectId),
-    spent_on         :: !Day,
-    updated_on       :: !UTCTime,
-    user             :: !(IdWithName UserId)
-  }
-  deriving (Eq, Show, Generic)
-
-instance FromJSON GetTimeEntriesResponse'TimeEntry
 
 newtype WrappedId = WrappedId {unWrappedId :: Int} deriving (Eq, Show)
 
@@ -267,6 +250,26 @@ data IssueTracker = IssueTracker
 instance FromJSON IssueTracker
 
 -- * Common records used in several requests
+
+data TimeEntry = TimeEntry
+  { activity         :: !(IdWithName ActivityId),
+    comments         :: !T.Text,
+    created_on       :: !UTCTime,
+    custom_fields    :: ![CustomFields],
+    easy_is_billable :: !Bool,
+    entity_id        :: !Int,
+    entity_type      :: !T.Text,
+    hours            :: !Double,
+    id               :: !TimeEntryId,
+    issue            :: !(Maybe WrappedId),
+    project          :: !(IdWithName ProjectId),
+    spent_on         :: !Day,
+    updated_on       :: !UTCTime,
+    user             :: !(IdWithName UserId)
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromJSON TimeEntry
 
 data IdWithName a = IdWithName
   { id   :: !a,
