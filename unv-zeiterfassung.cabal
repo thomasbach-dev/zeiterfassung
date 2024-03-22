@@ -9,11 +9,14 @@ common common-options
   default-language:   Haskell2010
   default-extensions:
     DeriveGeneric
+    DerivingVia
     DuplicateRecordFields
     FlexibleInstances
     LambdaCase
+    OverloadedRecordDot
     OverloadedStrings
     RecordWildCards
+    ScopedTypeVariables
     TupleSections
 
   ghc-options:
@@ -41,6 +44,7 @@ library
     , parsec
     , text
     , time
+    , unordered-containers
 
   hs-source-dirs:  src
 

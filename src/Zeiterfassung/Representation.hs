@@ -1,41 +1,54 @@
 module Zeiterfassung.Representation
-  ( LogLine(..)
-  , loggedTime
-  , roundLogLine
-  , filterZeroClocked
-  , Task
-  , defaultRoundingTOD
-  , defaultRoundingUTCT
-  , todRoundToNextNMinutes
-  , todRoundToNextFiveMinutes
-  , todRoundToNextQuarterHours
-  ) where
+  ( LogLine (..),
+    loggedTime,
+    roundLogLine,
+    filterZeroClocked,
+    Task,
+    loggedHours,
+    defaultRoundingTOD,
+    defaultRoundingUTCT,
+    todRoundToNextNMinutes,
+    todRoundToNextFiveMinutes,
+    todRoundToNextQuarterHours,
+  )
+where
 
-import qualified Data.Text as T
-
-import Data.Time
-    (NominalDiffTime, TimeOfDay (..), UTCTime (..), diffUTCTime, timeOfDayToTime, timeToTimeOfDay)
+import           Data.Fixed (divMod')
+import qualified Data.Text  as T
+import           Data.Time
+    (NominalDiffTime, TimeOfDay (..), UTCTime (..), diffUTCTime, nominalDiffTimeToSeconds,
+    timeOfDayToTime, timeToTimeOfDay)
 
 data LogLine = LogLine
-  { startTime :: UTCTime
-  , endTime   :: UTCTime
-  , subject   :: T.Text
-  , tasks     :: [Task]
-  } deriving (Eq, Show)
+  { startTime :: UTCTime,
+    endTime   :: UTCTime,
+    subject   :: T.Text,
+    tasks     :: [Task]
+  }
+  deriving (Eq, Show)
 
 type Task = T.Text
 
 -- | Discard all 'LogLine's which have the same start and end time.
 filterZeroClocked :: [LogLine] -> [LogLine]
-filterZeroClocked = filter (\LogLine{..} -> startTime /= endTime)
+filterZeroClocked = filter (\LogLine {..} -> startTime /= endTime)
 
 loggedTime :: LogLine -> NominalDiffTime
-loggedTime LogLine{..} = diffUTCTime endTime startTime
+loggedTime LogLine {..} = diffUTCTime endTime startTime
+
+loggedHours :: LogLine -> Double
+loggedHours logLine = fromIntegral hours + minutes
+  where
+    totalMinutes = (/ 60) . nominalDiffTimeToSeconds . loggedTime $ logLine
+    (hours :: Int, remaining) = totalMinutes `divMod'` 60
+    minutes = fromRational . toRational $ remaining / 60
 
 roundLogLine :: LogLine -> LogLine
-roundLogLine l = l { startTime = defaultRoundingUTCT (startTime l)
-                   , endTime = defaultRoundingUTCT (endTime l)
-                   }
+roundLogLine l =
+  l
+    { startTime = defaultRoundingUTCT (startTime l),
+      endTime = defaultRoundingUTCT (endTime l)
+    }
 
 defaultRoundingTOD :: TimeOfDay -> TimeOfDay
 defaultRoundingTOD = todRoundToNextQuarterHours
@@ -55,10 +68,11 @@ todRoundToNextNMinutes :: Int -> TimeOfDay -> TimeOfDay
 todRoundToNextNMinutes n (TimeOfDay h m _) = TimeOfDay h' m'' 0
   where
     (quotient, remainder) = m `divMod` n
-    fact = if remainder <= (n `div` 2)
-             then quotient
-             else quotient + 1
+    fact =
+      if remainder <= (n `div` 2)
+        then quotient
+        else quotient + 1
     m' = fact * n
     (h', m'') = case m' of
-                  60 -> (h + 1, 0)
-                  _  -> (h, m')
+      60 -> (h + 1, 0)
+      _  -> (h, m')

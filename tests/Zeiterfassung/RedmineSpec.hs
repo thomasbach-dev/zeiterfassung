@@ -6,8 +6,8 @@ import Zeiterfassung.Redmine
 
 spec :: Spec
 spec = do
-  describe "listTimeEntries" $ do
+  describe "getTimeEntries" $ do
     redmineConfig <- runIO getRedmineConfiguration
     it "should return a non-empty list" $ do
-      res <- listTimeEntries redmineConfig
+      res <- getTimeEntries redmineConfig
       res `shouldSatisfy` not . null

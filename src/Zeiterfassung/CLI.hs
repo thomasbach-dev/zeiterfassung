@@ -1,8 +1,10 @@
 module Zeiterfassung.CLI where
 
+import Network.HTTP.Simple   (parseRequest)
 import Options.Applicative
-import System.Environment
-import System.Exit
+    (Parser, ParserInfo, command, fullDesc, helper, info, progDesc, subparser, (<**>))
+import System.Environment    (lookupEnv)
+import System.Exit           (die)
 import Zeiterfassung.Redmine
 
 data Command = ToRedmine
@@ -22,9 +24,9 @@ commandParser = subparser (command "to-redmine" (info (pure ToRedmine) (progDesc
 getRedmineConfiguration :: IO RedmineConfig
 getRedmineConfiguration =
   RedmineConfig
-    <$> getFromEnv "REDMINE_URL" "the url of the Redmine instance"
+    <$> (getFromEnv "REDMINE_URL" "the url of the Redmine instance" >>= parseRequest)
     <*> getFromEnv "REDMINE_API_KEY" "the API key of the Redmine instance"
-    <*> getFromEnv "REDMINE_USER_ID" "the user ID"
+    <*> (read <$> getFromEnv "REDMINE_USER_ID" "the user ID")
 
 getFromEnv :: String -> String -> IO String
 getFromEnv var help_ =
