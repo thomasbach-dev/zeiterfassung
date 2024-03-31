@@ -26,16 +26,7 @@ import           Zeiterfassung.Representation
 moduleLogger :: String
 moduleLogger = "Zeiterfassung.CLI"
 
-data MainArgs = MainArgs
-  { logLevel    :: Priority,
-    mainCommand :: MainCommand
-  }
-  deriving (Eq, Show)
-
-data MainCommand
-  = ToRedmine ToRedmineArgs
-  | GetRedmineCommand GetRedmineCommandArgs
-  deriving (Eq, Show)
+-- * Main routine
 
 cliMain :: IO ()
 cliMain = do
@@ -47,6 +38,12 @@ cliMain = do
 dispatchToCommand :: MainCommand -> IO ()
 dispatchToCommand (ToRedmine args)         = toRedmineMain args
 dispatchToCommand (GetRedmineCommand args) = getRedmineMain args
+
+data MainArgs = MainArgs
+  { logLevel    :: Priority,
+    mainCommand :: MainCommand
+  }
+  deriving (Eq, Show)
 
 mainParser :: ParserInfo MainArgs
 mainParser =
@@ -71,13 +68,18 @@ mainParser =
             <> Options.Applicative.value INFO
         )
 
+data MainCommand
+  = ToRedmine ToRedmineCommandArgs
+  | GetRedmineCommand GetRedmineCommandArgs
+  deriving (Eq, Show)
+
 mainCommandParser :: Parser MainCommand
 mainCommandParser =
   subparser
     ( command
         "to-redmine"
         ( info
-            (ToRedmine <$> redmineParser <**> helper)
+            (ToRedmine <$> toRedmineCommandArgsParser <**> helper)
             (progDesc "Book times to redmine")
         )
         <> command
@@ -98,6 +100,7 @@ getRedmineMain args = do
   forM_ (sortOn (\e -> e.spent_on) resp.time_entries) $ \entry -> do
     debugM (moduleLogger <> ".getRedmineMain") (show entry)
     TIO.putStrLn . prettyTimeEntry $ entry
+  TIO.putStrLn $ "Total spent hours: " <> (T.pack . show . sum $ map (\e -> e.hours) resp.time_entries)
 
 prettyTimeEntry :: TimeEntry -> T.Text
 prettyTimeEntry entry =
@@ -110,6 +113,12 @@ prettyTimeEntry entry =
         <> entry.comments
     ]
 
+data GetRedmineCommandArgs = GetRedmineCommandArgs
+  { fromDate :: !(Maybe Day),
+    toDate   :: !(Maybe Day)
+  }
+  deriving (Eq, Show)
+
 getRedmineCommandArgsParser :: Parser GetRedmineCommandArgs
 getRedmineCommandArgsParser =
   GetRedmineCommandArgs
@@ -119,15 +128,9 @@ getRedmineCommandArgsParser =
 dateOption :: Mod OptionFields Day -> Parser Day
 dateOption modifier = option auto (modifier <> metavar "DATE")
 
-data GetRedmineCommandArgs = GetRedmineCommandArgs
-  { fromDate :: !(Maybe Day),
-    toDate   :: !(Maybe Day)
-  }
-  deriving (Eq, Show)
-
 -- * Publish to Redmine
 
-toRedmineMain :: ToRedmineArgs -> IO ()
+toRedmineMain :: ToRedmineCommandArgs -> IO ()
 toRedmineMain args = do
   cfg <- getRedmineConfiguration
   loglines <- readAgendaFile args.agendaFile
@@ -151,17 +154,19 @@ toRedmineMain args = do
   where
     loggerName = moduleLogger <> ".toRedmineMain"
 
-data ToRedmineArgs = ToRedmineArgs
+data ToRedmineCommandArgs = ToRedmineCommandArgs
   { dryRun     :: Bool,
     agendaFile :: String
   }
   deriving (Eq, Show)
 
-redmineParser :: Parser ToRedmineArgs
-redmineParser =
-  ToRedmineArgs
+toRedmineCommandArgsParser :: Parser ToRedmineCommandArgs
+toRedmineCommandArgsParser =
+  ToRedmineCommandArgs
     <$> switch (long "dry-run" <> short 'n' <> help "Do not create any time entry")
     <*> argument str (metavar "FILE" <> help "The agenda file to process")
+
+-- * Utils used in several commands
 
 getRedmineConfiguration :: IO RedmineConfig
 getRedmineConfiguration = do
