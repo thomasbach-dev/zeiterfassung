@@ -1,5 +1,7 @@
 module Zeiterfassung.Redmine
   ( RedmineConfig (..),
+    TimeEntry (..),
+    IdWithName (..),
     PostTimeEntryRequest (..),
     logLineToTimeEntryCreate,
     GetTimeEntriesRequest (..),
