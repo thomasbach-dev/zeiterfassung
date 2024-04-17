@@ -34,8 +34,9 @@ pAgendaLog = do
     catMaybes <$> pLogLine day `P.manyTill` (void (P.lookAhead pDate) P.<|> P.eof)
 
 pHeader :: Parser String
-pHeader = pWeekAgendaHeader P.<|> pDayAgendaHeader P.<|> pDaysAgendaHeader
+pHeader = pWeekAgendaHeader P.<|> pDayAgendaHeader P.<|> pDaysAgendaHeader P.<|> pMonthAgendaHeader
   where
+    pMonthAgendaHeader = P.string "Month-agenda" *> P.anyChar `P.manyTill` P.newline
     pWeekAgendaHeader = P.string "Week-agend" *> P.anyChar `P.manyTill` P.newline
     pDayAgendaHeader = P.string "Day-agenda" *> P.anyChar `P.manyTill` P.newline
     pDaysAgendaHeader = P.digit *> P.optional P.digit *> P.space *> P.string "days-agenda" *> P.anyChar `P.manyTill` P.newline
@@ -60,7 +61,7 @@ pClockedTask day = do
       *> P.char ')'
       *> P.spaces
   _ <- P.optional (pTaskState *> P.space)
-  _ <- P.optional (pPriority)
+  _ <- P.optional pPriority
   _ <- P.spaces
   (descr, tasks') <- pDescriptionAndTasksWithNewline
   pure (LogLine start end descr tasks')
@@ -75,7 +76,7 @@ pDescriptionAndTasksWithNewline = go ""
       let combined = descr <> descr'
           cleaned = T.stripEnd combined
           pOnlyTasksLeft = (cleaned,) <$> pTasksFromTags <* (void P.newline P.<|> P.eof)
-          pNoTasksInThisLine = const (cleaned, []) <$> (void P.newline P.<|> P.eof)
+          pNoTasksInThisLine = (cleaned, []) <$ (void P.newline P.<|> P.eof)
           pRecurse = do
             _ <- P.char ':'
             go (combined <> ":")
