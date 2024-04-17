@@ -3,7 +3,7 @@
   description = "unv-zeiterfassung";
   inputs = {
     nixpkgs.url =
-      "github:NixOS/nixpkgs/068d4db604958d05d0b46c47f79b507d84dbc069";
+      "github:NixOS/nixpkgs/nixos-23.11";
   };
   outputs = { self, nixpkgs }:
     let
