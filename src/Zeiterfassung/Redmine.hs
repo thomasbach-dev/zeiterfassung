@@ -9,6 +9,16 @@ module Zeiterfassung.Redmine
     GetTimeEntriesResponse (..),
     getTimeEntries,
     postTimeEntry,
+    deleteTimeEntry,
+    getIssue,
+    GetIssueResult (..),
+    GetIssueResult'Issue (..),
+    --
+    ActivityId (..),
+    IssueId (..),
+    ProjectId (..),
+    TimeEntryId (..),
+    UserId (..),
   )
 where
 
@@ -16,7 +26,7 @@ import           Control.Monad                (when)
 import           Data.Aeson
     (FromJSON (parseJSON), ToJSON (..), Value (Object), defaultOptions, genericToEncoding, object,
     withObject, (.:), (.=))
-import           Data.Aeson.Types             (prependFailure, typeMismatch)
+import           Data.Aeson.Types             (Parser, prependFailure, typeMismatch)
 import           Data.ByteString.Char8        (pack)
 import qualified Data.ByteString.Char8        as BSC
 import qualified Data.HashMap.Strict          as HM
@@ -93,9 +103,11 @@ newtype WrappedTimeEntry a = WrappedTimeEntry
   deriving (Eq, Show, Generic)
 
 instance (ToJSON a) => ToJSON (WrappedTimeEntry a) where
+  toJSON :: WrappedTimeEntry a -> Value
   toJSON (WrappedTimeEntry entry) = object ["time_entry" .= entry]
 
 instance (FromJSON a) => FromJSON (WrappedTimeEntry a) where
+  parseJSON :: Value -> Parser (WrappedTimeEntry a)
   parseJSON = withObject "WrappedTimeEntry" $ \v -> WrappedTimeEntry <$> v .: "time_entry"
 
 data PostTimeEntryRequest = PostTimeEntryRequest

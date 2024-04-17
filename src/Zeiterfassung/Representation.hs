@@ -56,7 +56,7 @@ defaultRoundingTOD :: TimeOfDay -> TimeOfDay
 defaultRoundingTOD = todRoundToNextQuarterHours
 
 defaultRoundingUTCT :: UTCTime -> UTCTime
-defaultRoundingUTCT (UTCTime d t) = (UTCTime d t')
+defaultRoundingUTCT (UTCTime d t) = UTCTime d t'
   where
     t' = timeOfDayToTime . defaultRoundingTOD . timeToTimeOfDay $ t
 

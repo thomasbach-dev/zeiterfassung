@@ -12,6 +12,7 @@ common common-options
     DerivingVia
     DuplicateRecordFields
     FlexibleInstances
+    InstanceSigs
     LambdaCase
     OverloadedRecordDot
     OverloadedStrings
