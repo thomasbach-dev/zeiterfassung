@@ -5,6 +5,7 @@ module Zeiterfassung.CLI
 where
 
 import           Control.Monad                (forM_, when)
+import           Control.Monad.Catch          (throwM)
 import           Data.Aeson                   (eitherDecodeFileStrict)
 import           Data.List                    (sortOn)
 import qualified Data.Text                    as T
@@ -183,5 +184,5 @@ getRedmineConfiguration = do
 getFromEnv :: String -> String -> IO String
 getFromEnv var help_ =
   lookupEnv var >>= \case
-    Nothing -> die $ "Please set '" <> var <> "' to " <> help_
+    Nothing -> throwM . userError $ "Please set '" <> var <> "' to " <> help_
     Just value_ -> pure value_
