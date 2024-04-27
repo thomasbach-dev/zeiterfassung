@@ -1,5 +1,5 @@
 cabal-version: 3.0
-name:          unv-zeiterfassung
+name:          zeiterfassung
 version:       0.1.0.0
 author:        Thomas Bach
 maintainer:    info@thomasbach.dev
@@ -53,12 +53,12 @@ library
 executable unv-zeiterfassung
   import:        common-options
   main-is:       exec/unv-zeiterfassung.hs
-  build-depends: unv-zeiterfassung
+  build-depends: zeiterfassung
 
 executable tbd-time-tracking
   import:        common-options
   main-is:       exec/tbd-time-tracking.hs
-  build-depends: unv-zeiterfassung
+  build-depends: zeiterfassung
   
 
 test-suite zeiterfassung-tests
@@ -73,6 +73,6 @@ test-suite zeiterfassung-tests
     , quickcheck-instances
     , text
     , time
-    , unv-zeiterfassung
+    , zeiterfassung
 
   ghc-options:    -Wno-missing-home-modules

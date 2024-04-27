@@ -1,10 +1,7 @@
 # Taken from https://github.com/NixOS/templates/tree/master/haskell-hello
 {
-  description = "unv-zeiterfassung";
-  inputs = {
-    nixpkgs.url =
-      "github:NixOS/nixpkgs/nixos-23.11";
-  };
+  description = "zeiterfassung";
+  inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11"; };
   outputs = { self, nixpkgs }:
     let
       supportedSystems = [ "x86_64-linux" ];
@@ -18,15 +15,14 @@
       ghcVersion = "ghc94";
     in {
       overlay = (final: prev: {
-        unv-zeiterfassung =
+        zeiterfassung =
           final.pkgs.haskell.packages."${ghcVersion}".callCabal2nix
-          "unv-zeiterfassung" ./. { };
+          "zeiterfassung" ./. { };
       });
-      packages = forAllSystems (system: {
-        unv-zeiterfassung = nixpkgsFor.${system}.unv-zeiterfassung;
-      });
+      packages = forAllSystems
+        (system: { zeiterfassung = nixpkgsFor.${system}.zeiterfassung; });
       defaultPackage =
-        forAllSystems (system: self.packages.${system}.unv-zeiterfassung);
+        forAllSystems (system: self.packages.${system}.zeiterfassung);
       checks = self.packages;
       devShell = forAllSystems (system:
         let
@@ -37,7 +33,7 @@
             with self.packages.${system};
             [
               # List all end leaf packages here
-              unv-zeiterfassung
+              zeiterfassung
             ];
           withHoogle = false;
           buildInputs = with haskellPackages; [
