@@ -8,6 +8,7 @@ import           Control.Monad                (forM_, when)
 import           Control.Monad.Catch          (throwM)
 import           Data.Aeson                   (eitherDecodeFileStrict)
 import           Data.List                    (sortOn)
+import           Data.Maybe                   (catMaybes)
 import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as TIO
 import           Data.Time                    (Day, timeToDaysAndTimeOfDay)
@@ -137,7 +138,7 @@ toRedmineMain args = do
   loglines <- readAgendaFile args.agendaFile
   mapM_ (debugM loggerName) $
     "Read log lines:" : map show loglines
-  allEntries <- mapM (logLineToTimeEntryCreate cfg) loglines
+  allEntries <- catMaybes <$> mapM (logLineToTimeEntryCreate cfg) loglines
   mapM_ (debugM loggerName) $
     "Mapped to the following time entries:" : map show allEntries
 

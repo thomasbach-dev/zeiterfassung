@@ -68,17 +68,18 @@ instance FromJSON ProjectDef
 
 -- ** Create
 
-logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO PostTimeEntryRequest
+logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO (Maybe PostTimeEntryRequest)
 logLineToTimeEntryCreate config logline = do
   debugM loggerName $ "Processing: " <> show logline
-  projectDef <- case mapMaybe (`HM.lookup` config.projectMap) logline.tasks of
+  case mapMaybe (`HM.lookup` config.projectMap) logline.tasks of
     [] -> do
       errorM loggerName $ "Could not find a project definition while processing " <> show logline
-      die $ "Cannot find project definition for " <> show logline
-    (x : _) -> pure x
-  let issue_id = projectDef.issue_id
-      activity_id = projectDef.activity_id
-  pure PostTimeEntryRequest {..}
+      pure Nothing
+    xs ->
+      let projectDef = last xs
+          issue_id = projectDef.issue_id
+          activity_id = projectDef.activity_id
+       in pure . Just $ PostTimeEntryRequest {..}
   where
     spent_on = Just . utctDay $ startTime logline
     hours = loggedHours logline
