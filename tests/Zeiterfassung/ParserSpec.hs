@@ -64,6 +64,9 @@ spec = do
     it "parses a log line with ticket number" $
       P.parse pLogLineWDay "" "  UNV:        15:11-15:25 Clocked:   (0:14) [36722] IServ-Connector: Matching  :bsb_iserv:\n"
         `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
+    it "parses a log line with missing tags" $
+      P.parse pLogLineWDay "" "  UNV:        15:11-15:25 Clocked:   (0:14) Foo\n"
+        `shouldBe` (Right . Just) (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "Foo" [])
 
   describe "pTasksFromTags" $ do
     it "parses a single task" $

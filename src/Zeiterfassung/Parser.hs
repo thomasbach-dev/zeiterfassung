@@ -72,7 +72,7 @@ pDescriptionAndTasksWithNewline :: Parser (T.Text, [Task])
 pDescriptionAndTasksWithNewline = go ""
   where
     go descr = do
-      descr' <- T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':')
+      descr' <- T.pack <$> P.anyChar `P.manyTill` P.lookAhead (P.char ':' P.<|> P.newline)
       let combined = descr <> descr'
           cleaned = T.stripEnd combined
           pOnlyTasksLeft = (cleaned,) <$> pTasksFromTags <* (void P.newline P.<|> P.eof)
