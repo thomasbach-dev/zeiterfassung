@@ -1,7 +1,7 @@
 # Taken from https://github.com/NixOS/templates/tree/master/haskell-hello
 {
   description = "zeiterfassung";
-  inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11"; };
+  inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05"; };
   outputs = { self, nixpkgs }:
     let
       supportedSystems = [ "x86_64-linux" ];
