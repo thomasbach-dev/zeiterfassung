@@ -12,7 +12,7 @@
           inherit system;
           overlays = [ self.overlay ];
         });
-      ghcVersion = "ghc94";
+      ghcVersion = "ghc96";
     in {
       overlay = (final: prev: {
         zeiterfassung =
