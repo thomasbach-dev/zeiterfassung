@@ -32,7 +32,8 @@ import qualified Data.ByteString.Char8        as BSC
 import qualified Data.HashMap.Strict          as HM
 import           Data.Maybe                   (catMaybes, mapMaybe)
 import qualified Data.Text                    as T
-import           Data.Time                    (Day, UTCTime (utctDay))
+import           Data.Time
+    (Day, UTCTime (utctDay), defaultTimeLocale, formatTime)
 import           GHC.Generics                 (Generic)
 import           Network.HTTP.Simple
     (Request, Response, getResponseBody, getResponseStatusCode, httpJSON, httpNoBody,
@@ -79,6 +80,7 @@ logLineToTimeEntryCreate config logline = do
       let projectDef = last xs
           issue_id = projectDef.issue_id
           activity_id = projectDef.activity_id
+          custom_fields = [customField_startTime]
        in pure . Just $ PostTimeEntryRequest {..}
   where
     spent_on = Just . utctDay $ startTime logline
@@ -86,6 +88,14 @@ logLineToTimeEntryCreate config logline = do
     comments = logline.subject
     user_id = userId config
     loggerName = moduleLogger <> ".logLineToTimeEntryCreate"
+    customField_startTime =
+      SetCustomField
+        { id = 130,
+          value = formatTimeRedmine logline.startTime
+        }
+
+formatTimeRedmine :: UTCTime -> T.Text
+formatTimeRedmine = T.pack . formatTime defaultTimeLocale "%F %R"
 
 postTimeEntry :: RedmineConfig -> PostTimeEntryRequest -> IO TimeEntry
 postTimeEntry cfg entry = do
@@ -117,22 +127,33 @@ instance (FromJSON a) => FromJSON (WrappedTimeEntry a) where
 
 data PostTimeEntryRequest = PostTimeEntryRequest
   { -- | required The alternative is to specify the project id
-    issue_id    :: !IssueId,
+    issue_id      :: !IssueId,
     -- | the date the time was spent (default to the current date)
-    spent_on    :: !(Maybe Day),
+    spent_on      :: !(Maybe Day),
     -- | (required): the number of spent hours
-    hours       :: !Double,
+    hours         :: !Double,
     -- | the id of the time activity. This parameter is required unless a default activity is
     -- defined in Redmine.
-    activity_id :: !ActivityId,
+    activity_id   :: !ActivityId,
     -- | short description for the entry (255 characters max)
-    comments    :: !T.Text,
+    comments      :: !T.Text,
     -- | user id to be specified in need of posting time on behalf of another user
-    user_id     :: !UserId
+    user_id       :: !UserId,
+    -- | custom fields
+    custom_fields :: ![SetCustomField]
   }
   deriving (Eq, Generic, Show)
 
 instance ToJSON PostTimeEntryRequest where
+  toEncoding = genericToEncoding defaultOptions
+
+data SetCustomField = SetCustomField
+  { value :: !T.Text,
+    id    :: !Int
+  }
+  deriving (Eq, Generic, Show)
+
+instance ToJSON SetCustomField where
   toEncoding = genericToEncoding defaultOptions
 
 -- ** Listing
