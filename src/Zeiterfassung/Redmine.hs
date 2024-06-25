@@ -165,11 +165,11 @@ defaultGetTimeEntriesRequest :: GetTimeEntriesRequest
 defaultGetTimeEntriesRequest = GetTimeEntriesRequest Nothing Nothing Nothing Nothing Nothing
 
 data GetTimeEntriesRequest = GetTimeEntriesRequest
-  { project_id :: Maybe ProjectId,
-    user_id    :: Maybe UserId,
-    limit      :: Maybe Int,
-    from       :: Maybe Day,
-    to         :: Maybe Day
+  { project_id :: !(Maybe ProjectId),
+    user_id    :: !(Maybe UserId),
+    limit      :: !(Maybe Int),
+    from       :: !(Maybe Day),
+    to         :: !(Maybe Day)
   }
   deriving (Eq, Show)
 
