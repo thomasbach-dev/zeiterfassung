@@ -20,10 +20,10 @@ import           Data.Time
     timeOfDayToTime, timeToTimeOfDay)
 
 data LogLine = LogLine
-  { startTime :: UTCTime,
-    endTime   :: UTCTime,
-    subject   :: T.Text,
-    tasks     :: [Task]
+  { startTime :: !UTCTime,
+    endTime   :: !UTCTime,
+    subject   :: !T.Text,
+    tasks     :: ![Task]
   }
   deriving (Eq, Show)
 
