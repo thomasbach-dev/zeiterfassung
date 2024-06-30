@@ -139,7 +139,7 @@ toRedmineMain args = do
   mapM_ (debugM loggerName) $
     "Read log lines:" : map show loglines
   allEntries <- catMaybes <$> mapM (logLineToTimeEntryCreate cfg) loglines
-  mapM_ (debugM loggerName) $
+  mapM_ (infoM loggerName) $
     "Mapped to the following time entries:" : map show allEntries
 
   let totalSpent :: Double = sum . map (\x -> x.hours) $ entries
