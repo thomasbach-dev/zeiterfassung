@@ -39,7 +39,7 @@ import           Network.HTTP.Simple
     (Request, Response, getResponseBody, getResponseStatusCode, httpJSON, httpNoBody,
     setRequestBodyJSON, setRequestHeader, setRequestMethod, setRequestPath, setRequestQueryString)
 import           System.Exit                  (die)
-import           System.Log.Logger            (debugM, errorM)
+import           System.Log.Logger            (debugM, errorM, infoM)
 import           Zeiterfassung.Representation
 
 moduleLogger :: String
@@ -72,11 +72,14 @@ instance FromJSON ProjectDef
 logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO (Maybe PostTimeEntryRequest)
 logLineToTimeEntryCreate config logline = do
   debugM loggerName $ "Processing: " <> show logline
-  case mapMaybe (`HM.lookup` config.projectMap) logline.tasks of
-    [] -> do
+  case (hours, mapMaybe (`HM.lookup` config.projectMap) logline.tasks) of
+    (0, _) -> do
+      infoM loggerName $ "Logged hours rounded to zero. Dropping!"
+      pure Nothing
+    (_, []) -> do
       errorM loggerName $ "Could not find a project definition while processing " <> show logline
       pure Nothing
-    xs ->
+    (_, xs) ->
       let projectDef = last xs
           issue_id = projectDef.issue_id
           activity_id = projectDef.activity_id
