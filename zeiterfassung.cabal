@@ -76,5 +76,9 @@ test-suite zeiterfassung-tests
     , text
     , time
     , zeiterfassung
+  other-modules:
+    Zeiterfassung.ParserSpec
+    Zeiterfassung.RedmineSpec
+    Zeiterfassung.RepresentationSpec
 
   ghc-options:    -Wno-missing-home-modules
