@@ -74,7 +74,7 @@ logLineToTimeEntryCreate config logline = do
   debugM loggerName $ "Processing: " <> show logline
   case (hours, mapMaybe (`HM.lookup` config.projectMap) logline.tasks) of
     (0, _) -> do
-      infoM loggerName $ "Logged hours rounded to zero. Dropping!"
+      infoM loggerName "Logged hours rounded to zero. Dropping!"
       pure Nothing
     (_, []) -> do
       errorM loggerName $ "Could not find a project definition while processing " <> show logline

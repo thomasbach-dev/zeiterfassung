@@ -88,7 +88,7 @@ spec = do
         `shouldBe` Right (LogLine (timeOnExampleDay 15 11) (timeOnExampleDay 15 25) "[36722] IServ-Connector: Matching" ["bsb_iserv"])
 
 mkExampleDay :: Integer -> Int -> Int -> (Int -> Int -> UTCTime)
-mkExampleDay y m d = (\h m' -> UTCTime day (timeOfDayToTime $ TimeOfDay h m' 0))
+mkExampleDay y m d = \h m' -> UTCTime day (timeOfDayToTime $ TimeOfDay h m' 0)
   where
     day = fromGregorian y m d
 

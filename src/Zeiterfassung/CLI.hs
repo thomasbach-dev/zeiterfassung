@@ -42,8 +42,8 @@ dispatchToCommand (ToRedmine args)         = toRedmineMain args
 dispatchToCommand (GetRedmineCommand args) = getRedmineMain args
 
 data MainArgs = MainArgs
-  { logLevel    :: Priority,
-    mainCommand :: MainCommand
+  { logLevel    :: !Priority,
+    mainCommand :: !MainCommand
   }
   deriving (Eq, Show)
 
@@ -71,8 +71,8 @@ mainParser =
         )
 
 data MainCommand
-  = ToRedmine ToRedmineCommandArgs
-  | GetRedmineCommand GetRedmineCommandArgs
+  = ToRedmine !ToRedmineCommandArgs
+  | GetRedmineCommand !GetRedmineCommandArgs
   deriving (Eq, Show)
 
 mainCommandParser :: Parser MainCommand
@@ -157,8 +157,8 @@ toRedmineMain args = do
     loggerName = moduleLogger <> ".toRedmineMain"
 
 data ToRedmineCommandArgs = ToRedmineCommandArgs
-  { dryRun     :: Bool,
-    agendaFile :: String
+  { dryRun     :: !Bool,
+    agendaFile :: !String
   }
   deriving (Eq, Show)
 
