@@ -94,7 +94,7 @@ logLineToTimeEntryCreate config logline = do
     customField_startTime =
       SetCustomField
         { id = 130,
-          value = formatTimeRedmine logline.startTime
+          value = formatTimeRedmine . defaultRoundingUTCT $ logline.startTime
         }
 
 formatTimeRedmine :: UTCTime -> T.Text
