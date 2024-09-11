@@ -29,6 +29,7 @@ import           Data.Aeson
 import           Data.Aeson.Types             (Parser, prependFailure, typeMismatch)
 import           Data.ByteString.Char8        (pack)
 import qualified Data.ByteString.Char8        as BSC
+import           Data.Fixed                   (Pico)
 import qualified Data.HashMap.Strict          as HM
 import           Data.Maybe                   (catMaybes, mapMaybe)
 import qualified Data.Text                    as T
@@ -69,8 +70,8 @@ instance FromJSON ProjectDef
 
 -- ** Create
 
-logLineToTimeEntryCreate :: RedmineConfig -> LogLine -> IO (Maybe PostTimeEntryRequest)
-logLineToTimeEntryCreate config logline = do
+logLineToTimeEntryCreate :: Pico -> RedmineConfig -> LogLine -> IO (Maybe PostTimeEntryRequest)
+logLineToTimeEntryCreate roundingFactor config logline = do
   debugM loggerName $ "Processing: " <> show logline
   case (hours, mapMaybe (`HM.lookup` config.projectMap) logline.tasks) of
     (0, _) -> do
@@ -84,10 +85,13 @@ logLineToTimeEntryCreate config logline = do
           issue_id = projectDef.issue_id
           activity_id = projectDef.activity_id
           custom_fields = [customField_startTime]
-       in pure . Just $ PostTimeEntryRequest {..}
+          result = PostTimeEntryRequest {..}
+       in do
+            debugM loggerName $ "Result: " <> show result
+            pure . Just $ result
   where
     spent_on = Just . utctDay $ startTime logline
-    hours = loggedHours logline
+    hours = loggedHours roundingFactor logline
     comments = logline.subject
     user_id = userId config
     loggerName = moduleLogger <> ".logLineToTimeEntryCreate"

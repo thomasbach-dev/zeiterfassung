@@ -13,7 +13,7 @@ module Zeiterfassung.Representation
   )
 where
 
-import           Data.Fixed (divMod')
+import           Data.Fixed (Pico, divMod')
 import qualified Data.Text  as T
 import           Data.Time
     (NominalDiffTime, TimeOfDay (..), UTCTime (..), diffUTCTime, nominalDiffTimeToSeconds,
@@ -36,15 +36,14 @@ filterZeroClocked = filter (\LogLine {..} -> startTime /= endTime)
 loggedTime :: LogLine -> NominalDiffTime
 loggedTime LogLine {..} = diffUTCTime endTime startTime
 
-loggedHours :: LogLine -> Double
-loggedHours logLine = fromIntegral hours + minutes
+loggedHours :: Pico -> LogLine -> Double
+loggedHours roundingFactor logLine = fromIntegral hours + minutes
   where
     totalMinutes = (/ 60) . nominalDiffTimeToSeconds . loggedTime $ logLine
     (hours :: Int, remaining) = totalMinutes `divMod'` 60
     (quarterHours :: Int, remaining') = remaining `divMod'` 15
     minutes = (* 0.25) . fromRational . toRational $ roundedQuarterHours
-    -- The condition '<= 7' has to be adapted every now and then.
-    roundedQuarterHours = if remaining' <= 7 then quarterHours else quarterHours + 1
+    roundedQuarterHours = if remaining' <= roundingFactor then quarterHours else quarterHours + 1
 
 roundLogLine :: LogLine -> LogLine
 roundLogLine l =

@@ -14,9 +14,10 @@ spec = do
     prop "result can be divided by n" $ \n t ->
       0 < n
         && n
-          < 60 ==> do
-            let (TimeOfDay _ m _) = todRoundToNextNMinutes n t
-            (m `mod` n) `shouldBe` 0
+          < 60
+        ==> do
+          let (TimeOfDay _ m _) = todRoundToNextNMinutes n t
+          (m `mod` n) `shouldBe` 0
 
   describe "todRoundToNextFiveMinutes" $ do
     it "Returns identity on 0s, 5s and 10s" $
@@ -37,19 +38,19 @@ spec = do
         timestamp2 = UTCTime aDay (timeOfDayToTime midday)
         aDay = fromGregorian 2024 1 1
     it "determines correctly full hours" $
-      loggedHours example1 `shouldBe` 12.0
+      loggedHours 0 example1 `shouldBe` 12.0
     it "deterimens correctly half hours" $
       let example3 = LogLine timestamp1 timestamp3 "" []
           timestamp3 = ((30 * 60) `addUTCTime` timestamp1)
-       in loggedHours example3 `shouldBe` 0.5
+       in loggedHours 0 example3 `shouldBe` 0.5
     it "correctly ceils to the next quarter hour" $
       let example4 = LogLine timestamp1 timestamp4 "" []
           timestamp4 = ((10 * 60) `addUTCTime` timestamp1)
-       in loggedHours example4 `shouldBe` 0.25
+       in loggedHours 0 example4 `shouldBe` 0.25
     it "correctly floors to the next quarter hour" $
       let thisExample = LogLine timestamp1 thisTimestamp "" []
           thisTimestamp = ((20 * 60) `addUTCTime` timestamp1)
-       in loggedHours thisExample `shouldBe` 0.25
+       in loggedHours 7 thisExample `shouldBe` 0.25
 
 minutesToTOD :: Int -> TimeOfDay
 minutesToTOD m = TimeOfDay 0 m 0

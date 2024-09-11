@@ -7,6 +7,7 @@ where
 import           Control.Monad                (forM_, when)
 import           Control.Monad.Catch          (throwM)
 import           Data.Aeson                   (eitherDecodeFileStrict)
+import           Data.Fixed                   (Pico)
 import           Data.List                    (sortOn)
 import           Data.Maybe                   (catMaybes)
 import qualified Data.Text                    as T
@@ -138,7 +139,7 @@ toRedmineMain args = do
   loglines <- readAgendaFile args.agendaFile
   mapM_ (debugM loggerName) $
     "Read log lines:" : map show loglines
-  allEntries <- catMaybes <$> mapM (logLineToTimeEntryCreate cfg) loglines
+  allEntries <- catMaybes <$> mapM (logLineToTimeEntryCreate (roundingFactor args) cfg) loglines
   mapM_ (infoM loggerName) $
     "Mapped to the following time entries:" : map show allEntries
 
@@ -157,8 +158,9 @@ toRedmineMain args = do
     loggerName = moduleLogger <> ".toRedmineMain"
 
 data ToRedmineCommandArgs = ToRedmineCommandArgs
-  { dryRun     :: !Bool,
-    agendaFile :: !String
+  { dryRun         :: !Bool,
+    roundingFactor :: !Pico,
+    agendaFile     :: !String
   }
   deriving (Eq, Show)
 
@@ -166,6 +168,7 @@ toRedmineCommandArgsParser :: Parser ToRedmineCommandArgs
 toRedmineCommandArgsParser =
   ToRedmineCommandArgs
     <$> switch (long "dry-run" <> short 'n' <> help "Do not create any time entry")
+    <*> option auto (long "rounding-factor" <> short 'r' <> help "Rounding factor" <> value 7)
     <*> argument str (metavar "FILE" <> help "The agenda file to process")
 
 -- * Utils used in several commands
