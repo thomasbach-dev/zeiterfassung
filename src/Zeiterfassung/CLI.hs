@@ -168,7 +168,14 @@ toRedmineCommandArgsParser :: Parser ToRedmineCommandArgs
 toRedmineCommandArgsParser =
   ToRedmineCommandArgs
     <$> switch (long "dry-run" <> short 'n' <> help "Do not create any time entry")
-    <*> option auto (long "rounding-factor" <> short 'r' <> help "Rounding factor" <> value 7)
+    <*> option
+      auto
+      ( long "rounding-factor"
+          <> short 'r'
+          <> help "Rounding factor. Higher, values result in lower synchronized times."
+          <> value 7
+          <> showDefault
+      )
     <*> argument str (metavar "FILE" <> help "The agenda file to process")
 
 -- * Utils used in several commands
