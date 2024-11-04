@@ -12,7 +12,7 @@ import           Data.List                    (sortOn)
 import           Data.Maybe                   (catMaybes)
 import qualified Data.Text                    as T
 import qualified Data.Text.IO                 as TIO
-import           Data.Time                    (Day, timeToDaysAndTimeOfDay)
+import           Data.Time                    (Day, NominalDiffTime, timeToDaysAndTimeOfDay)
 import           Network.HTTP.Simple          (parseRequest)
 import           Options.Applicative
     (Mod, OptionFields, Parser, ParserInfo, argument, auto, command, execParser, fullDesc, help,
@@ -143,10 +143,10 @@ toRedmineMain args = do
   mapM_ (infoM loggerName) $
     "Mapped to the following time entries:" : map show allEntries
 
-  let totalSpent :: Double = sum . map (\x -> x.hours) $ entries
+  let totalSpent :: NominalDiffTime = fromRational . toRational . (3600 *) . sum . map (\x -> x.hours) $ entries
       actuallySpent = sum . map loggedTime $ loglines
       entries = filter (\x -> x.hours /= 0) allEntries
-  infoM loggerName $ "Create time entries with a total spent hours of: " <> show totalSpent
+  infoM loggerName $ "Create time entries with a total spent hours of: " <> (show . timeToDaysAndTimeOfDay) totalSpent
   infoM loggerName $ "Actually spent: " <> (show . timeToDaysAndTimeOfDay) actuallySpent
   when args.dryRun $ do
     die "Dry run mode! Exiting"
